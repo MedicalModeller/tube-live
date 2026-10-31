@@ -1,8 +1,8 @@
 <!doctype html>
 <!-- Tube Live (tube.trent-park.org) by TudorDesigns
-     Version: 29 October 2026. Tube (11 lines), Overground (6 lines), DLR and Elizabeth line, with a switch between them; Ko-fi button (ko-fi.com/tudormodeller); GoatCounter visit tracking (tudormodeller.goatcounter.com).
+     Version: 29 October 2026. Tube (11 lines), Overground (6 lines), DLR, Elizabeth line and buses 21, 76 and 141, with a switch between them; Ko-fi button (ko-fi.com/tudormodeller); GoatCounter visit tracking (tudormodeller.goatcounter.com).
      Questions, ideas or bugs: https://github.com/MedicalModeller/tube-live/issues -->
-<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for every London Underground, Overground, DLR and Elizabeth line, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: live trains on every Tube, Overground, DLR and Elizabeth line"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for every London Underground, Overground, DLR and Elizabeth line, plus buses 21, 76 and 141, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: live trains on every Tube, Overground, DLR and Elizabeth line"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
 <title>Tube Live: live Tube, Overground, DLR and Elizabeth line train map</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -113,6 +113,8 @@ body[data-line="northern"]{--line:#15151a;--head:#15151a}
 .modes button+button{border-left:1.5px solid var(--headfg)}
 .modes button[aria-pressed="true"]{background:var(--headfg);color:var(--head)}
 .modes button:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+@media (max-width:480px){.modes button{padding:8px 8px 6px;font-size:.78rem}}
+.modes{overflow-x:auto}
 </style>
 
 <header class="top">
@@ -130,14 +132,15 @@ body[data-line="northern"]{--line:#15151a;--head:#15151a}
   </div>
 </header>
 <div id="alert" class="alert" hidden role="status"><div class="wrap" id="alertText"></div></div>
+<div id="busnote" class="notice" hidden><div class="wrap"><b>Bus routes load live from TfL.</b> This preview can't reach TfL, so no buses are shown here. Open the page at tube.trent-park.org to see them.</div></div>
 <div id="demo" class="notice" hidden><div class="wrap"><b>Showing simulated trains.</b> This preview can't reach TfL's live feed. Open the same page from your own web host (GitHub Pages works) and it switches to real trains automatically.</div></div>
 
 <main class="wrap">
   <div class="legend">
     <span><svg id="lgi0" width="20" height="12" viewBox="-10 -6 20 12" style="transform:rotate(180deg)"><path transform="scale(1.3)" d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--train)" stroke="var(--surface)" stroke-width="1.6"/></svg><span id="lg0">Westbound, to Heathrow and Uxbridge</span></span>
     <span><svg id="lgi1" width="18" height="10" viewBox="-9 -5 18 10"><path d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--surface)" stroke="var(--train)" stroke-width="1.6"/></svg><span id="lg1">Eastbound, to Cockfosters</span></span>
-    <span>Tap a train or a station for details</span>
-    <span id="swipe" hidden>On a phone, swipe the map sideways to see it all</span>
+    <span id="taphint">Tap a train or a station for details</span>
+    <span id="swipe" hidden>Swipe or scroll the map sideways to see it all</span>
   </div>
   <div class="mapbox" id="mapbox"><svg id="map" role="img" aria-label="Strip map with live train positions"></svg></div>
   <div class="support">
@@ -158,6 +161,11 @@ var KX="King's Cross St. Pancras", T23="Heathrow Terminals 2 & 3", T4="Heathrow 
 /* ---------- Line definitions ----------
    Each station: [name, u (position along the strip), v (branch row), parent (neighbour towards the root end)].
    "dirs" are TfL's direction words: [away from the root end, towards it]. */
+function busRoute(no){
+  return {name:"Bus "+no,h1:"Bus "+no,btn:no,bus:true,api:no,dynamic:true,col:["#d42e12","#b0240c","#ffffff","#ff6a4d"],
+    stations:[],extra:[],childOrder:{},flip:true,vw:420,vcx:40,htop:200,maxLbl:26,minStep:21,
+    ic:[],words:[["outbound",0],["inbound",1]],dirs:["Outbound","Inbound"],legend:["loading route","loading route"],labelUp:[],alias:[],sim:[]};
+}
 function chain(list,names,u0,step,v,first){names.forEach(function(n,i){list.push([n,u0+i*step,v,i?names[i-1]:first]);});}
 var LINES={
   piccadilly:(function(){
@@ -381,6 +389,7 @@ var LINES={
       alias:[["heathrow terminals 2 and 3",T23],["heathrow terminals 2 3",T23],["heathrow terminal 2 and 3",T23],["heathrow terminals 123",T23],["heathrow t2 and 3",T23],["terminals 2 and 3",T23],["heathrow t4",T4],["terminal 4",T4],["heathrow t5",T5],["terminal 5",T5]],
       sim:[["Reading","Abbey Wood",4],["Heathrow Terminal 5","Abbey Wood",4],["Paddington","Shenfield",5],["Heathrow Terminal 4","Shenfield",2],["Maidenhead","Shenfield",2]]};
   })(),
+  bus21:busRoute("21"), bus76:busRoute("76"), bus141:busRoute("141"),
   central:(function(){
     var L=[];
     chain(L,["Epping","Theydon Bois","Debden","Loughton","Buckhurst Hill","Woodford"],0,1,1,null);
@@ -402,7 +411,8 @@ var MODES=[
   {id:"tube",name:"Tube",lines:["bakerloo","central","circle","district","hammersmith-city","jubilee","metropolitan","northern","piccadilly","victoria","waterloo-city"]},
   {id:"overground",name:"Overground",lines:["liberty","lioness","mildmay","suffragette","weaver","windrush"]},
   {id:"dlr",name:"DLR",lines:["dlr"]},
-  {id:"elizabeth",name:"Elizabeth",lines:["elizabeth"]}];
+  {id:"elizabeth",name:"Elizabeth",lines:["elizabeth"]},
+  {id:"bus",name:"Buses",lines:["bus21","bus76","bus141"]}];
 var LINE_ORDER=[], MODE_OF={};
 MODES.forEach(function(m){m.lines.forEach(function(id){LINE_ORDER.push(id);MODE_OF[id]=m.id;});});
 (function(){
@@ -546,7 +556,7 @@ function ingest(list,at){
   raw=[];var best=new Map(), byV={}, anon=[];
   if(LINE.split)list.forEach(function(p){var k=String(p.vehicleId||"").trim();if(k&&!/^0+$/.test(k))(byV[k]=byV[k]||[]).push(p);});
   list.forEach(function(p){
-    var st=stationFrom(p.stationName); if(!st)return;
+    var st=(LINE.idMap&&p.naptanId&&LINE.idMap[p.naptanId])||stationFrom(p.stationName); if(!st)return;
     if(LINE.split){p._hint=routeHint(p,byV[String(p.vehicleId||"").trim()]);st=fixSt(st,p._hint);}
     p._st=st; p._dest=stationFrom(p.destinationName||p.towards||""); raw.push(p);
     var key=String(p.vehicleId||"").trim();
@@ -570,7 +580,7 @@ function layout(){
   var maxU=1, vmin=0, vmax=0;
   ORDER.forEach(function(n){maxU=Math.max(maxU,U(n));vmin=Math.min(vmin,V(n));vmax=Math.max(vmax,V(n));});
   if(horiz){
-    var W=Math.max(LINE.forceH&&w<860?LINE.forceH:860,w-2), xR=W-125, xL=34, sp=(xR-xL)/maxU, rh=LINE.hrow||64, ty=138+vmax*rh, fl=!!LINE.flip;
+    var W=Math.max(LINE.forceH&&w<860?LINE.forceH:860,w-2,LINE.minW||0), xR=W-125, xL=34, sp=(xR-xL)/maxU, rh=LINE.hrow||64, ty=(LINE.htop||138)+vmax*rh, fl=!!LINE.flip;
     return {mode:"h",W:W,H:Math.round(ty-vmin*rh+(vmin<0?120:40)),sw:5,
       pt:function(n){return {x:fl?xL+U(n)*sp:xR-U(n)*sp,y:ty-V(n)*rh};},
       side:function(n){return (V(n)<0.5&&V(n)!==0&&!up.has(n))?1:-1;}};
@@ -586,6 +596,7 @@ function drawMap(){
   svg.setAttribute("viewBox","0 0 "+LY.W+" "+LY.H); svg.setAttribute("class",LY.mode);
   svg.style.width=(LY.mode==="h"&&LY.W>box.clientWidth+4)?LY.W+"px":"";
   svg.style.maxWidth=svg.style.width?"none":"";
+  document.getElementById("swipe").hidden=!svg.style.width;
   svg.setAttribute("aria-label",LINE.name+" line strip map with live train positions");
   var lines=el("g",{},svg);
   if(LINE.casing)EDGES.forEach(function(e){var a=LY.pt(e[0]),b=LY.pt(e[1]);el("path",{"class":"case","stroke-width":LY.sw+2.5,d:"M"+a.x+","+a.y+"L"+b.x+","+b.y},lines);});
@@ -607,7 +618,7 @@ function drawMap(){
       lbl=el("text",{"class":"lbl"+(ic?" ic-l":""),x:lx,y:ly,transform:"rotate("+(sd<0?-45:45)+" "+lx+" "+ly+")"},g);
       if(sd>0)lbl.setAttribute("dy","0.7em");
     }
-    lbl.textContent=short(n);
+    var tx=short(n); if(LY.mode==="h"&&LINE.maxLbl&&tx.length>LINE.maxLbl){tx=tx.slice(0,LINE.maxLbl-1).trim()+"…";el("title",{},lbl).textContent=short(n);lbl.appendChild(document.createTextNode(tx));}else lbl.textContent=tx;
   });
   trainLayer=el("g",{"class":"trains"},svg);
   render(true);
@@ -646,7 +657,7 @@ function render(fresh){
     }
     var gm=trainGeom(t,now);
     g.setAttribute("class","train "+(t.dir===0?"w":"e")+(key===selTrain?" sel":"")+((isNew||fresh)?" fresh":""));
-    g.setAttribute("aria-label","Train to "+destName(t)+", next stop "+short(t.next));
+    g.setAttribute("aria-label",(LINE.bus?"Bus to ":"Train to ")+destName(t)+", next stop "+short(t.next));
     g.style.transform="translate("+gm.x.toFixed(1)+"px,"+gm.y.toFixed(1)+"px) rotate("+gm.a.toFixed(0)+"deg)";
     if(isNew||fresh){void g.getBoundingClientRect();requestAnimationFrame(function(){g.classList.remove("fresh");});}
   });
@@ -659,14 +670,14 @@ function render(fresh){
 
 /* ---------- Details sheet ---------- */
 var sheet=document.getElementById("sheet"), card=document.getElementById("card");
-function destName(t){return t.dest?short(t.dest):(t.destRaw?t.destRaw.replace(/ Underground Station/i,""):"Check front of train");}
+function destName(t){return (t.dest&&!LINE.bus)?short(t.dest):(t.destRaw?t.destRaw.replace(/ (Underground|DLR|Rail) Station/i,""):(t.dest?short(t.dest):"Check front of train"));}
 function mins(s){var m=Math.round(s/60);return s<30?"Due":(m<1?"1 min":m+" min");}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 function refreshSheet(){
   var el=(Date.now()-fetchedAt)/1000, h="";
   if(selTrain&&trains.has(selTrain)){
     var t=trains.get(selTrain), tts=Math.max(0,t.tts-el);
-    h='<div class="hd"><div><h2>Train to '+esc(destName(t))+'</h2><div class="sub">'+LINE.dirs[t.dir]+(t.key.charAt(0)==="~"?"":' · train '+esc(t.key))+'</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
+    h='<div class="hd"><div><h2>'+(LINE.bus?'Bus to ':'Train to ')+esc(destName(t))+'</h2><div class="sub">'+LINE.dirs[t.dir]+(t.key.charAt(0)==="~"?"":(LINE.bus?' · bus ':' · train ')+esc(t.key))+'</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
       '<dl class="kv"><dt>Next stop</dt><dd><b>'+esc(short(t.next))+'</b> · '+mins(tts)+'</dd>'+
       (t.loc?'<dt>Reported</dt><dd>'+esc(t.loc)+'</dd>':'')+'</dl>';
   }else if(selStn&&S[selStn]){
@@ -678,7 +689,7 @@ function refreshSheet(){
       var r=list.filter(function(x){return x.dir===d;}).slice(0,4);
       return '<div class="dirgrp"><h3>'+LINE.dirs[d]+'</h3>'+(r.length?r.map(function(x){return '<div class="row"><span>'+esc(x.dest)+'</span><b>'+mins(x.tts)+'</b></div>';}).join(""):'<div class="empty">No trains listed</div>')+'</div>';
     };
-    h='<div class="hd"><div><h2>'+esc(short(selStn))+'</h2><div class="sub">Next '+LINE.name+' line trains</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
+    h='<div class="hd"><div><h2>'+esc(short(selStn))+'</h2><div class="sub">Next '+(LINE.bus?esc(LINE.name)+' buses':esc(LINE.name)+' line trains')+'</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
       '<div class="rows">'+grp(0)+grp(1)+'</div>';
   }else{closeSheet();return;}
   card.innerHTML=h;
@@ -706,7 +717,7 @@ function pathBetween(a,b){var out=[a],c=a,guard=0;while(c!==b&&guard++<200){c=NH
 function makeSim(){
   var seed=20261022; function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
   var SPEED=1/105, list=[], id=301, t0=Date.now();
-  LINE.sim.forEach(function(r){
+  (LINE.sim||[]).forEach(function(r){
     var pts=[r[0]].concat(r[3]||[]).concat([r[1]]), p=[r[0]];
     for(var q=1;q<pts.length;q++)p=p.concat(pathBetween(pts[q-1],pts[q]).slice(1));
     var L=p.length-1, fwd=(r[3]&&r[3].length)?0:(DEPTH[r[1]]>DEPTH[r[0]]?0:1);
@@ -730,7 +741,7 @@ function makeSim(){
 
 /* ---------- Polling ---------- */
 var demo=/demo/.test(location.hash), sim=null, gen=0, statusEl=document.getElementById("status");
-function api(path){return "https://api.tfl.gov.uk/Line/"+LINE_ID+"/"+path;}
+function api(path){return "https://api.tfl.gov.uk/Line/"+(LINE.api||LINE_ID)+"/"+path;}
 function setStatus(text,cls){statusEl.textContent=text;statusEl.className="pill "+(cls||"");}
 function getJSON(url){
   var ac=new AbortController(), to=setTimeout(function(){ac.abort();},10000);
@@ -738,7 +749,7 @@ function getJSON(url){
 }
 function enterDemo(){demo=true;sim=makeSim();document.getElementById("demo").hidden=false;setStatus("Demo data","demo");}
 function poll(){
-  if(demo){if(!sim)sim=makeSim();ingest(sim(Date.now()),Date.now());render(false);return;}
+  if(demo){if(LINE.bus)return;if(!sim)sim=makeSim();ingest(sim(Date.now()),Date.now());render(false);return;}
   var my=gen;
   getJSON(api("Arrivals")).then(function(list){if(my!==gen)return;ingest(list,Date.now());render(false);})
   .catch(function(){if(my!==gen)return;if(!fetchedAt){enterDemo();poll();}else setStatus("Reconnecting","warn");});
@@ -762,6 +773,47 @@ function pollStatus(){
   }).catch(function(){});
 }
 
+/* ---------- Bus routes: stop list from TfL's route sequence ----------
+   The strip is the longest outbound route. Inbound stops (other side of the road) are matched to the
+   outbound stop of the same name; any left over join the nearest matched stop before them. */
+function longestRoute(seq){
+  var best=[]; ((seq&&seq.orderedLineRoutes)||[]).forEach(function(r){if((r.naptanIds||[]).length>best.length)best=r.naptanIds;});
+  return best;
+}
+function stopNames(seq){
+  var m={}; ((seq&&seq.stopPointSequences)||[]).forEach(function(sq){(sq.stopPoint||[]).forEach(function(sp){if(sp.id)m[sp.id]=sp.name||sp.commonName||sp.id;});});
+  ((seq&&seq.stations)||[]).forEach(function(sp){if(sp.id&&!m[sp.id])m[sp.id]=sp.name||sp.id;});
+  return m;
+}
+function loadBusRoute(L){
+  var base="https://api.tfl.gov.uk/Line/"+L.api+"/Route/Sequence/";
+  return Promise.all([getJSON(base+"outbound"),getJSON(base+"inbound").catch(function(){return null;})]).then(function(r){
+    var out=r[0], inb=r[1], on=stopNames(out), ids=longestRoute(out);
+    if(ids.length<2)throw new Error("no route");
+    var stations=[], idMap={}, byName={}, seen={};
+    ids.forEach(function(id,i){
+      var nm=String(on[id]||id).trim(), key=nm;
+      if(seen[key]){seen[key]++;key=nm+" ("+seen[key]+")";}else seen[key]=1;
+      stations.push([key,i,0,i?stations[i-1][0]:null]); idMap[id]=key;
+      if(!byName[norm(nm)])byName[norm(nm)]=key;
+    });
+    Object.keys(on).forEach(function(id){if(!idMap[id]&&byName[norm(on[id])])idMap[id]=byName[norm(on[id])];});
+    if(inb){
+      var inn=stopNames(inb), last=null;
+      longestRoute(inb).forEach(function(id){
+        var hit=idMap[id]||byName[norm(inn[id]||"")];
+        if(hit){idMap[id]=hit;last=hit;} else if(last)idMap[id]=last;
+      });
+      Object.keys(inn).forEach(function(id){if(!idMap[id]&&byName[norm(inn[id])])idMap[id]=byName[norm(inn[id])];});
+    }
+    L.stations=stations; L.idMap=idMap;
+    L.ic=[stations[0][0],stations[stations.length-1][0]];
+    var first=on[ids[0]]||stations[0][0], lastName=on[ids[ids.length-1]]||stations[stations.length-1][0];
+    L.legend=["to "+lastName,"to "+first];
+    L.minW=stations.length*L.minStep+180;
+  });
+}
+
 /* ---------- Choosing a line ---------- */
 function setLine(id,save){
   if(!LINES[id])id="piccadilly";
@@ -773,7 +825,6 @@ function setLine(id,save){
   document.querySelectorAll("#modes button").forEach(function(b){b.setAttribute("aria-pressed",String(b.getAttribute("data-mode")===mode));});
   document.querySelectorAll("#lines button").forEach(function(b){b.hidden=mlines.indexOf(b.getAttribute("data-line"))<0;});
   document.getElementById("lines").hidden=mlines.length<2;
-  document.getElementById("swipe").hidden=!LINE.forceH;
   document.getElementById("lg0").textContent=LINE.dirs[0]+", "+LINE.legend[0];
   document.getElementById("lg1").textContent=LINE.dirs[1]+", "+LINE.legend[1];
   document.getElementById("lgi0").style.transform=LINE.flip?"none":"rotate(180deg)";
@@ -786,6 +837,26 @@ function setLine(id,save){
   if(save){
     try{localStorage.setItem("tube-live-line",id);}catch(e){}
     try{history.replaceState(null,"","#"+id);}catch(e){}
+  }
+  document.getElementById("taphint").textContent=LINE.bus?"Tap a bus or a stop for details":"Tap a train or a station for details";
+  document.getElementById("busnote").hidden=true;
+  if(LINE.dynamic&&!LINE.stations.length){
+    var my=gen, L0=LINE;
+    document.getElementById("counts").textContent="Loading the route from TfL…";
+    drawMap();
+    loadBusRoute(L0).then(function(){
+      if(my!==gen)return;
+      buildNetwork(id);
+      document.getElementById("lg0").textContent=LINE.dirs[0]+", "+LINE.legend[0];
+      document.getElementById("lg1").textContent=LINE.dirs[1]+", "+LINE.legend[1];
+      drawMap(); poll(); pollStatus();
+    }).catch(function(){
+      if(my!==gen)return;
+      document.getElementById("counts").textContent="";
+      document.getElementById("busnote").hidden=false;
+      setStatus(demo?"Demo data":"Can't reach TfL",demo?"demo":"warn");
+    });
+    return;
   }
   drawMap(); poll(); pollStatus();
 }
@@ -801,7 +872,7 @@ document.getElementById("lines").addEventListener("click",function(e){
 });
 
 var rt; window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){var m=(box.clientWidth>=860||LINE.forceH)?"h":"v";if(!LY||m!==LY.mode||m==="h")drawMap();},200);});
-var start="piccadilly", hm=(location.hash||"").toLowerCase().replace(/^#/,"").split(/[^a-z-]/)[0];
+var start="piccadilly", hm=(location.hash||"").toLowerCase().replace(/^#/,"").split(/[^a-z0-9-]/)[0];
 if(LINES[hm])start=hm; else {try{var st=localStorage.getItem("tube-live-line");if(st&&LINES[st])start=st;}catch(e){}}
 if(demo){document.getElementById("demo").hidden=false;setStatus("Demo data","demo");}
 setLine(start,false);
