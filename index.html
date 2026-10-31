@@ -1,8 +1,8 @@
 <!doctype html>
 <!-- Tube Live (tube.trent-park.org) by TudorDesigns
-     Version: 29 October 2026. Tube (11 lines), Overground (6 lines), DLR, Elizabeth line and buses 21, 76 and 141, with a switch between them; Ko-fi button (ko-fi.com/tudormodeller); GoatCounter visit tracking (tudormodeller.goatcounter.com).
+     Version: 29 October 2026. Tube (11 lines), Overground (6 lines), DLR, Elizabeth line and buses 21, 76, 121, 141, 299, 307, 377 and N91, with a switch between them; Ko-fi button (ko-fi.com/tudormodeller); GoatCounter visit tracking (tudormodeller.goatcounter.com).
      Questions, ideas or bugs: https://github.com/MedicalModeller/tube-live/issues -->
-<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for every London Underground, Overground, DLR and Elizabeth line, plus buses 21, 76 and 141, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: live trains on every Tube, Overground, DLR and Elizabeth line"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for every London Underground, Overground, DLR and Elizabeth line, plus buses 21, 76, 121, 141, 299, 307, 377 and N91, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: live trains on every Tube, Overground, DLR and Elizabeth line"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
 <title>Tube Live: live Tube, Overground, DLR and Elizabeth line train map</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -161,8 +161,8 @@ var KX="King's Cross St. Pancras", T23="Heathrow Terminals 2 & 3", T4="Heathrow 
 /* ---------- Line definitions ----------
    Each station: [name, u (position along the strip), v (branch row), parent (neighbour towards the root end)].
    "dirs" are TfL's direction words: [away from the root end, towards it]. */
-function busRoute(no){
-  return {name:"Bus "+no,h1:"Bus "+no,btn:no,bus:true,api:no,dynamic:true,col:["#d42e12","#b0240c","#ffffff","#ff6a4d"],
+function busRoute(no,apiId){
+  return {name:"Bus "+no,h1:"Bus "+no,btn:no,bus:true,api:apiId||no,dynamic:true,col:["#d42e12","#b0240c","#ffffff","#ff6a4d"],
     stations:[],extra:[],childOrder:{},flip:true,vw:420,vcx:40,htop:200,maxLbl:26,minStep:21,
     ic:[],words:[["outbound",0],["inbound",1]],dirs:["Outbound","Inbound"],legend:["loading route","loading route"],labelUp:[],alias:[],sim:[]};
 }
@@ -389,7 +389,7 @@ var LINES={
       alias:[["heathrow terminals 2 and 3",T23],["heathrow terminals 2 3",T23],["heathrow terminal 2 and 3",T23],["heathrow terminals 123",T23],["heathrow t2 and 3",T23],["terminals 2 and 3",T23],["heathrow t4",T4],["terminal 4",T4],["heathrow t5",T5],["terminal 5",T5]],
       sim:[["Reading","Abbey Wood",4],["Heathrow Terminal 5","Abbey Wood",4],["Paddington","Shenfield",5],["Heathrow Terminal 4","Shenfield",2],["Maidenhead","Shenfield",2]]};
   })(),
-  bus21:busRoute("21"), bus76:busRoute("76"), bus141:busRoute("141"),
+  bus21:busRoute("21"), bus76:busRoute("76"), bus121:busRoute("121"), bus141:busRoute("141"), bus299:busRoute("299"), bus307:busRoute("307"), bus377:busRoute("377"), busn91:busRoute("N91","n91"),
   central:(function(){
     var L=[];
     chain(L,["Epping","Theydon Bois","Debden","Loughton","Buckhurst Hill","Woodford"],0,1,1,null);
@@ -412,7 +412,7 @@ var MODES=[
   {id:"overground",name:"Overground",lines:["liberty","lioness","mildmay","suffragette","weaver","windrush"]},
   {id:"dlr",name:"DLR",lines:["dlr"]},
   {id:"elizabeth",name:"Elizabeth",lines:["elizabeth"]},
-  {id:"bus",name:"Buses",lines:["bus21","bus76","bus141"]}];
+  {id:"bus",name:"Buses",lines:["bus21","bus76","bus121","bus141","bus299","bus307","bus377","busn91"]}];
 var LINE_ORDER=[], MODE_OF={};
 MODES.forEach(function(m){m.lines.forEach(function(id){LINE_ORDER.push(id);MODE_OF[id]=m.id;});});
 (function(){
