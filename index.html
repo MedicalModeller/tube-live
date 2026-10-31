@@ -132,7 +132,7 @@ body[data-line="northern"]{--line:#15151a;--head:#15151a}
   </div>
 </header>
 <div id="alert" class="alert" hidden role="status"><div class="wrap" id="alertText"></div></div>
-<div id="busnote" class="notice" hidden><div class="wrap"><b>Bus routes load live from TfL.</b> This preview can't reach TfL, so no buses are shown here. Open the page at tube.trent-park.org to see them.</div></div>
+<div id="busnote" class="notice" hidden><div class="wrap"><b>Waiting for TfL.</b> The route hasn't loaded yet. The page keeps trying every 30 seconds, so there's no need to refresh.</div></div>
 <div id="demo" class="notice" hidden><div class="wrap"><b>Showing simulated trains.</b> This preview can't reach TfL's live feed. Open the same page from your own web host (GitHub Pages works) and it switches to real trains automatically.</div></div>
 
 <main class="wrap">
@@ -740,19 +740,28 @@ function makeSim(){
 }
 
 /* ---------- Polling ---------- */
-var demo=/demo/.test(location.hash), sim=null, gen=0, statusEl=document.getElementById("status");
+var everOk=false, failCount=0, demo=/demo/.test(location.hash), sim=null, gen=0, statusEl=document.getElementById("status");
 function api(path){return "https://api.tfl.gov.uk/Line/"+(LINE.api||LINE_ID)+"/"+path;}
 function setStatus(text,cls){statusEl.textContent=text;statusEl.className="pill "+(cls||"");}
-function getJSON(url){
-  var ac=new AbortController(), to=setTimeout(function(){ac.abort();},10000);
+function getJSON(url,ms){
+  var ac=new AbortController(), to=setTimeout(function(){ac.abort();},ms||10000);
   return fetch(url,{signal:ac.signal,cache:"no-store"}).then(function(r){clearTimeout(to);if(!r.ok)throw new Error("HTTP "+r.status);return r.json();});
 }
 function enterDemo(){demo=true;sim=makeSim();document.getElementById("demo").hidden=false;setStatus("Demo data","demo");}
 function poll(){
   if(demo){if(LINE.bus)return;if(!sim)sim=makeSim();ingest(sim(Date.now()),Date.now());render(false);return;}
   var my=gen;
-  getJSON(api("Arrivals")).then(function(list){if(my!==gen)return;ingest(list,Date.now());render(false);})
-  .catch(function(){if(my!==gen)return;if(!fetchedAt){enterDemo();poll();}else setStatus("Reconnecting","warn");});
+  getJSON(api("Arrivals"),LINE.bus?25000:15000).then(function(list){
+    if(my!==gen)return; everOk=true; failCount=0;
+    if(statusEl.textContent==="Reconnecting"||statusEl.textContent==="Connecting")setStatus("Live","");
+    ingest(list,Date.now());render(false);
+  }).catch(function(){
+    if(my!==gen)return; failCount++;
+    /* Demo mode is only for previews that can never reach TfL: two failures in a row before anything has ever loaded, and never for buses. */
+    if(!everOk&&!LINE.bus&&failCount>=2){enterDemo();poll();return;}
+    setStatus("Reconnecting","warn");
+    if(!fetchedAt||failCount<3)setTimeout(function(){if(my===gen&&!document.hidden)poll();},4000);
+  });
 }
 function pollStatus(){
   if(demo)return;
@@ -785,9 +794,28 @@ function stopNames(seq){
   ((seq&&seq.stations)||[]).forEach(function(sp){if(sp.id&&!m[sp.id])m[sp.id]=sp.name||sp.id;});
   return m;
 }
-function loadBusRoute(L){
+var ROUTE_DAYS=7;
+function routeCache(L,save){
+  var k="tube-live-route-"+L.api;
+  try{
+    if(save){localStorage.setItem(k,JSON.stringify({t:Date.now(),stations:L.stations,idMap:L.idMap,legend:L.legend}));return null;}
+    var c=JSON.parse(localStorage.getItem(k)||"null"); return (c&&c.stations&&c.stations.length>1)?c:null;
+  }catch(e){return null;}
+}
+function useCached(L,c){L.stations=c.stations;L.idMap=c.idMap;L.legend=c.legend;L.ic=[c.stations[0][0],c.stations[c.stations.length-1][0]];L.minW=c.stations.length*L.minStep+180;}
+function loadBusRoute(L,tries){
+  var c=routeCache(L);
+  if(c&&Date.now()-c.t<ROUTE_DAYS*864e5){useCached(L,c);return Promise.resolve();}
+  tries=tries||0;
+  return fetchBusRoute(L).then(function(){routeCache(L,true);}).catch(function(err){
+    if(tries<2)return new Promise(function(res){setTimeout(res,3000);}).then(function(){return loadBusRoute(L,tries+1);});
+    if(c){useCached(L,c);return;}   /* an older saved copy beats nothing */
+    throw err;
+  });
+}
+function fetchBusRoute(L){
   var base="https://api.tfl.gov.uk/Line/"+L.api+"/Route/Sequence/";
-  return Promise.all([getJSON(base+"outbound"),getJSON(base+"inbound").catch(function(){return null;})]).then(function(r){
+  return Promise.all([getJSON(base+"outbound",25000),getJSON(base+"inbound",25000).catch(function(){return null;})]).then(function(r){
     var out=r[0], inb=r[1], on=stopNames(out), ids=longestRoute(out);
     if(ids.length<2)throw new Error("no route");
     var stations=[], idMap={}, byName={}, seen={};
@@ -855,6 +883,7 @@ function setLine(id,save){
       document.getElementById("counts").textContent="";
       document.getElementById("busnote").hidden=false;
       setStatus(demo?"Demo data":"Can't reach TfL",demo?"demo":"warn");
+      if(!demo)setTimeout(function(){if(my===gen)setLine(id,false);},30000);   /* keep trying in the background */
     });
     return;
   }
