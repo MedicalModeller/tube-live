@@ -163,7 +163,7 @@ var KX="King's Cross St. Pancras", T23="Heathrow Terminals 2 & 3", T4="Heathrow 
    "dirs" are TfL's direction words: [away from the root end, towards it]. */
 function busRoute(no,apiId,opt){
   opt=opt||{};
-  return {outTo:opt.outTo,legendFix:opt.legend,name:"Bus "+no,h1:"Bus "+no,btn:no,bus:true,api:apiId||no,dynamic:true,col:["#d42e12","#b0240c","#ffffff","#ff6a4d"],
+  return {outTo:opt.outTo,swap:!!opt.swap,legendFix:opt.legend,name:"Bus "+no,h1:"Bus "+no,btn:no,bus:true,api:apiId||no,dynamic:true,col:["#d42e12","#b0240c","#ffffff","#ff6a4d"],
     stations:[],extra:[],childOrder:{},flip:true,vw:420,vcx:40,htop:200,maxLbl:26,minStep:21,
     ic:[],words:[["outbound",0],["inbound",1]],dirs:["Outbound","Inbound"],legend:["loading route","loading route"],labelUp:[],alias:[],sim:[]};
 }
@@ -390,7 +390,7 @@ var LINES={
       alias:[["heathrow terminals 2 and 3",T23],["heathrow terminals 2 3",T23],["heathrow terminal 2 and 3",T23],["heathrow terminals 123",T23],["heathrow t2 and 3",T23],["terminals 2 and 3",T23],["heathrow t4",T4],["terminal 4",T4],["heathrow t5",T5],["terminal 5",T5]],
       sim:[["Reading","Abbey Wood",4],["Heathrow Terminal 5","Abbey Wood",4],["Paddington","Shenfield",5],["Heathrow Terminal 4","Shenfield",2],["Maidenhead","Shenfield",2]]};
   })(),
-  bus21:busRoute("21"), bus38:busRoute("38"), bus73:busRoute("73"), bus341:busRoute("341"), bus476:busRoute("476"), bus76:busRoute("76"), bus13:busRoute("13"), bus56:busRoute("56",null,{outTo:"whipps cross",legend:["to Whipps Cross Bus Stand","to St Bart's Hospital"]}), bus113:busRoute("113"), bus121:busRoute("121"), bus141:busRoute("141"), bus299:busRoute("299"), bus307:busRoute("307"), bus377:busRoute("377"), busn91:busRoute("N91","n91"),
+  bus21:busRoute("21",null,{swap:true}), bus38:busRoute("38",null,{swap:true}), bus73:busRoute("73"), bus341:busRoute("341",null,{swap:true}), bus476:busRoute("476",null,{swap:true}), bus76:busRoute("76",null,{swap:true}), bus13:busRoute("13",null,{swap:true}), bus56:busRoute("56",null,{outTo:"whipps cross",legend:["to Whipps Cross Bus Stand","to St Bart's Hospital"]}), bus113:busRoute("113",null,{swap:true}), bus121:busRoute("121",null,{swap:true}), bus141:busRoute("141",null,{swap:true}), bus299:busRoute("299"), bus307:busRoute("307"), bus377:busRoute("377"), busn91:busRoute("N91","n91"),
   central:(function(){
     var L=[];
     chain(L,["Epping","Theydon Bois","Debden","Loughton","Buckhurst Hill","Woodford"],0,1,1,null);
@@ -799,7 +799,7 @@ function stopNames(seq){
 }
 var ROUTE_DAYS=7;
 function routeCache(L,save){
-  var k="tube-live-route2-"+L.api;
+  var k="tube-live-route3-"+L.api;
   try{
     if(save){localStorage.setItem(k,JSON.stringify({t:Date.now(),stations:L.stations,idMap:L.idMap,dirOf:L.dirOf,legend:L.legend}));return null;}
     var c=JSON.parse(localStorage.getItem(k)||"null"); return (c&&c.stations&&c.stations.length>1)?c:null;
@@ -821,6 +821,8 @@ function fetchBusRoute(L){
   return Promise.all([getJSON(base+"outbound",25000),getJSON(base+"inbound",25000).catch(function(){return null;})]).then(function(r){
     var out=r[0], inb=r[1];
     /* If we know where "outbound" should end (e.g. the 56 to Whipps Cross) and TfL's sequences are the other way round, swap them. */
+    /* Routes where TfL's outbound/inbound are the opposite of what local riders call them. */
+    if(L.swap&&inb){var t0=out;out=inb;inb=t0;}
     if(L.outTo&&inb){
       var endName=function(q){var n=stopNames(q),ids0=longestRoute(q);return norm(n[ids0[ids0.length-1]]||"");};
       if(endName(out).indexOf(L.outTo)<0&&endName(inb).indexOf(L.outTo)>=0){var tmp=out;out=inb;inb=tmp;}
