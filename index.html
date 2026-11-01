@@ -161,8 +161,9 @@ var KX="King's Cross St. Pancras", T23="Heathrow Terminals 2 & 3", T4="Heathrow 
 /* ---------- Line definitions ----------
    Each station: [name, u (position along the strip), v (branch row), parent (neighbour towards the root end)].
    "dirs" are TfL's direction words: [away from the root end, towards it]. */
-function busRoute(no,apiId){
-  return {name:"Bus "+no,h1:"Bus "+no,btn:no,bus:true,api:apiId||no,dynamic:true,col:["#d42e12","#b0240c","#ffffff","#ff6a4d"],
+function busRoute(no,apiId,opt){
+  opt=opt||{};
+  return {outTo:opt.outTo,legendFix:opt.legend,name:"Bus "+no,h1:"Bus "+no,btn:no,bus:true,api:apiId||no,dynamic:true,col:["#d42e12","#b0240c","#ffffff","#ff6a4d"],
     stations:[],extra:[],childOrder:{},flip:true,vw:420,vcx:40,htop:200,maxLbl:26,minStep:21,
     ic:[],words:[["outbound",0],["inbound",1]],dirs:["Outbound","Inbound"],legend:["loading route","loading route"],labelUp:[],alias:[],sim:[]};
 }
@@ -389,7 +390,7 @@ var LINES={
       alias:[["heathrow terminals 2 and 3",T23],["heathrow terminals 2 3",T23],["heathrow terminal 2 and 3",T23],["heathrow terminals 123",T23],["heathrow t2 and 3",T23],["terminals 2 and 3",T23],["heathrow t4",T4],["terminal 4",T4],["heathrow t5",T5],["terminal 5",T5]],
       sim:[["Reading","Abbey Wood",4],["Heathrow Terminal 5","Abbey Wood",4],["Paddington","Shenfield",5],["Heathrow Terminal 4","Shenfield",2],["Maidenhead","Shenfield",2]]};
   })(),
-  bus21:busRoute("21"), bus76:busRoute("76"), bus13:busRoute("13"), bus56:busRoute("56"), bus113:busRoute("113"), bus121:busRoute("121"), bus141:busRoute("141"), bus299:busRoute("299"), bus307:busRoute("307"), bus377:busRoute("377"), busn91:busRoute("N91","n91"),
+  bus21:busRoute("21"), bus76:busRoute("76"), bus13:busRoute("13"), bus56:busRoute("56",null,{outTo:"whipps cross",legend:["to Whipps Cross Bus Stand","to St Bart's Hospital"]}), bus113:busRoute("113"), bus121:busRoute("121"), bus141:busRoute("141"), bus299:busRoute("299"), bus307:busRoute("307"), bus377:busRoute("377"), busn91:busRoute("N91","n91"),
   central:(function(){
     var L=[];
     chain(L,["Epping","Theydon Bois","Debden","Loughton","Buckhurst Hill","Woodford"],0,1,1,null);
@@ -482,11 +483,13 @@ function parseLoc(loc){
 /* ---------- Turning predictions into trains ---------- */
 var raw=[], trains=new Map(), fetchedAt=0;
 function wordIdx(p){ // direction from the platform name: 0, 1 or -1 if unknown
+  if(LINE.dirOf&&p.naptanId&&(p.naptanId in LINE.dirOf))return LINE.dirOf[p.naptanId];
   var pl=(String(p.platformName||"")+" "+String(p.direction||"")).toLowerCase(), w=LINE.words||[[LINE.dirs[0].toLowerCase(),0],[LINE.dirs[1].toLowerCase(),1]];
   for(var i=0;i<w.length;i++)if(pl.indexOf(w[i][0])>=0)return w[i][1];
   return -1;
 }
 function awayOf(p,next,dest){
+  if(LINE.dirOf&&p.naptanId&&(p.naptanId in LINE.dirOf))return LINE.dirOf[p.naptanId]===0;
   if(dest&&next&&dest!==next&&NH[next][dest])return DEPTH[NH[next][dest]]>DEPTH[next];
   var w=wordIdx(p); if(w>=0)return w===0;
   if(dest&&dest===next)return DEPTH[next]>MAXD/2;
@@ -796,13 +799,13 @@ function stopNames(seq){
 }
 var ROUTE_DAYS=7;
 function routeCache(L,save){
-  var k="tube-live-route-"+L.api;
+  var k="tube-live-route2-"+L.api;
   try{
-    if(save){localStorage.setItem(k,JSON.stringify({t:Date.now(),stations:L.stations,idMap:L.idMap,legend:L.legend}));return null;}
+    if(save){localStorage.setItem(k,JSON.stringify({t:Date.now(),stations:L.stations,idMap:L.idMap,dirOf:L.dirOf,legend:L.legend}));return null;}
     var c=JSON.parse(localStorage.getItem(k)||"null"); return (c&&c.stations&&c.stations.length>1)?c:null;
   }catch(e){return null;}
 }
-function useCached(L,c){L.stations=c.stations;L.idMap=c.idMap;L.legend=c.legend;L.ic=[c.stations[0][0],c.stations[c.stations.length-1][0]];L.minW=c.stations.length*L.minStep+180;}
+function useCached(L,c){L.stations=c.stations;L.idMap=c.idMap;L.dirOf=c.dirOf||null;L.legend=L.legendFix||c.legend;L.ic=[c.stations[0][0],c.stations[c.stations.length-1][0]];L.minW=c.stations.length*L.minStep+180;}
 function loadBusRoute(L,tries){
   var c=routeCache(L);
   if(c&&Date.now()-c.t<ROUTE_DAYS*864e5){useCached(L,c);return Promise.resolve();}
@@ -816,8 +819,17 @@ function loadBusRoute(L,tries){
 function fetchBusRoute(L){
   var base="https://api.tfl.gov.uk/Line/"+L.api+"/Route/Sequence/";
   return Promise.all([getJSON(base+"outbound",25000),getJSON(base+"inbound",25000).catch(function(){return null;})]).then(function(r){
-    var out=r[0], inb=r[1], on=stopNames(out), ids=longestRoute(out);
+    var out=r[0], inb=r[1];
+    /* If we know where "outbound" should end (e.g. the 56 to Whipps Cross) and TfL's sequences are the other way round, swap them. */
+    if(L.outTo&&inb){
+      var endName=function(q){var n=stopNames(q),ids0=longestRoute(q);return norm(n[ids0[ids0.length-1]]||"");};
+      if(endName(out).indexOf(L.outTo)<0&&endName(inb).indexOf(L.outTo)>=0){var tmp=out;out=inb;inb=tmp;}
+    }
+    var on=stopNames(out), ids=longestRoute(out);
     if(ids.length<2)throw new Error("no route");
+    /* Direction of a bus = which side of the road its stop is on: stops in the strip's own sequence mean heading away from the start (0). */
+    var dirOf={};
+    Object.keys(on).forEach(function(id){dirOf[id]=0;});
     var stations=[], idMap={}, byName={}, seen={};
     ids.forEach(function(id,i){
       var nm=String(on[id]||id).trim(), key=nm;
@@ -832,12 +844,13 @@ function fetchBusRoute(L){
         var hit=idMap[id]||byName[norm(inn[id]||"")];
         if(hit){idMap[id]=hit;last=hit;} else if(last)idMap[id]=last;
       });
-      Object.keys(inn).forEach(function(id){if(!idMap[id]&&byName[norm(inn[id])])idMap[id]=byName[norm(inn[id])];});
+      Object.keys(inn).forEach(function(id){if(!idMap[id]&&byName[norm(inn[id])])idMap[id]=byName[norm(inn[id])];if(!(id in dirOf))dirOf[id]=1;});
+      var iids=longestRoute(inb); if(iids.length)L._inEnd=inn[iids[iids.length-1]];
     }
-    L.stations=stations; L.idMap=idMap;
+    L.stations=stations; L.idMap=idMap; L.dirOf=dirOf;
     L.ic=[stations[0][0],stations[stations.length-1][0]];
     var first=on[ids[0]]||stations[0][0], lastName=on[ids[ids.length-1]]||stations[stations.length-1][0];
-    L.legend=["to "+lastName,"to "+first];
+    L.legend=L.legendFix||["to "+lastName,"to "+(L._inEnd||first)];
     L.minW=stations.length*L.minStep+180;
   });
 }
