@@ -48,6 +48,11 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .legend span{display:inline-flex;align-items:center;gap:7px}
 .legend svg{overflow:visible}
 .mapbox{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding-block:6px;overflow-x:auto}
+.mapwrap{position:relative}
+.loading{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:var(--surface);color:var(--fg);border:1.5px solid var(--line);border-radius:999px;padding:8px 16px 7px;font-weight:600;font-size:.9rem;box-shadow:0 6px 18px rgba(10,15,40,.15);max-width:calc(100% - 24px);text-align:center}
+.spin{width:14px;height:14px;border-radius:50%;border:2.5px solid var(--rule);border-top-color:var(--line);animation:spin .9s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.spin{animation:none}}
 #map{display:block;margin:0 auto;width:100%;height:auto}
 #map.v{max-width:430px}
 .seg{stroke:var(--line);fill:none;stroke-linecap:round;stroke-linejoin:round}
@@ -142,7 +147,7 @@ body[data-line="northern"]{--line:#15151a;--head:#15151a}
     <span id="taphint">Tap a train or a station for details</span>
     <span id="swipe" hidden>Swipe or scroll the map sideways to see it all</span>
   </div>
-  <div class="mapbox" id="mapbox"><svg id="map" role="img" aria-label="Strip map with live train positions"></svg></div>
+  <div class="mapwrap"><div class="mapbox" id="mapbox"><svg id="map" role="img" aria-label="Strip map with live train positions"></svg></div><div class="loading" id="loading" role="status" hidden><span class="spin" aria-hidden="true"></span><span id="loadtext">Loading trains from TfL…</span></div></div>
   <div class="support">
     <a class="kofi" id="kofi" href="https://ko-fi.com/tudormodeller" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3.5c0 1 1 1.2 1 2.2M12 3.5c0 1 1 1.2 1 2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Buy me a coffee</a>
     <span>Tube Live is free to use. If it helps you, a coffee keeps it going.</span>
@@ -666,6 +671,7 @@ function render(fresh){
   });
   gTrains.forEach(function(g,key){if(!seen.has(key)){g.remove();gTrains.delete(key);}});
   if(selTrain&&!trains.has(selTrain))closeSheet();
+  showLoading();
   document.getElementById("counts").textContent=trains.size?(n[0]+" "+LINE.dirs[0].toLowerCase()+" · "+n[1]+" "+LINE.dirs[1].toLowerCase()):"";
   document.getElementById("updated").textContent=fetchedAt?"Updated "+new Date(fetchedAt).toLocaleTimeString("en-GB"):"";
   if(!sheet.hidden)refreshSheet();
@@ -743,6 +749,17 @@ function makeSim(){
 }
 
 /* ---------- Polling ---------- */
+/* Simulated trains are only for previews that can never reach TfL, never on the real site. */
+var DEMO_OK=!/(^|\.)trent-park\.org$|github\.io$/i.test(location.hostname);
+function showLoading(){
+  var box=document.getElementById("loading"); if(!box)return;
+  var waiting=!fetchedAt&&!demo&&!(LINE&&LINE.bus&&!LINE.stations.length&&!document.getElementById("busnote").hidden);
+  box.hidden=!waiting;
+  if(waiting){
+    var what=LINE&&LINE.bus?"buses":"trains";
+    document.getElementById("loadtext").textContent=failCount>0?"TfL is slow to answer. Still trying…":(LINE&&LINE.bus&&!LINE.stations.length?"Loading the route from TfL…":"Loading "+what+" from TfL…");
+  }
+}
 var everOk=false, failCount=0, demo=/demo/.test(location.hash), sim=null, gen=0, statusEl=document.getElementById("status");
 function api(path){return "https://api.tfl.gov.uk/Line/"+(LINE.api||LINE_ID)+"/"+path;}
 function setStatus(text,cls){statusEl.textContent=text;statusEl.className="pill "+(cls||"");}
@@ -761,8 +778,8 @@ function poll(){
   }).catch(function(){
     if(my!==gen)return; failCount++;
     /* Demo mode is only for previews that can never reach TfL: two failures in a row before anything has ever loaded, and never for buses. */
-    if(!everOk&&!LINE.bus&&failCount>=2){enterDemo();poll();return;}
-    setStatus("Reconnecting","warn");
+    if(!everOk&&!LINE.bus&&failCount>=2&&DEMO_OK){enterDemo();poll();return;}
+    setStatus("Reconnecting","warn"); showLoading();
     if(!fetchedAt||failCount<3)setTimeout(function(){if(my===gen&&!document.hidden)poll();},4000);
   });
 }
