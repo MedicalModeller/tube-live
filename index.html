@@ -101,6 +101,8 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .empty{color:var(--muted);font-size:.88rem}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin-top:12px;font-size:.92rem}
 .kv dt{color:var(--muted)}.kv dd{margin:0;min-width:0}
+.wiki{display:inline-block;margin-top:12px;font-weight:600;font-size:.9rem;color:var(--fg);text-decoration:underline;text-decoration-color:var(--line);text-decoration-thickness:2px;text-underline-offset:3px}
+.wiki:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 body[data-line="victoria"]{--line:#29b0e8;--head:#1787bd}
 body[data-line="central"]{--line:#d2042d;--head:#b00327}
 body[data-line="northern"]{--line:#15151a;--head:#15151a}
@@ -410,7 +412,7 @@ var LINES={
     chain(L,["Hanger Lane","Perivale","Greenford","Northolt","South Ruislip","Ruislip Gardens","West Ruislip"],38,1,1,"North Acton");
     chain(L,["West Acton","Ealing Broadway"],38,1,-1,"North Acton");
     chain(L,["Wanstead","Redbridge","Gants Hill","Newbury Park","Barkingside","Fairlop","Hainault","Grange Hill","Chigwell","Roding Valley"],15,-1,-1,"Leytonstone");
-    return {name:"Central",col:["#d2042d","#b00327","#ffffff","#ff4d6d"],stations:L,extra:[["Roding Valley","Woodford"]],childOrder:{},
+    return {name:"Central",wiki:true,col:["#d2042d","#b00327","#ffffff","#ff4d6d"],stations:L,extra:[["Roding Valley","Woodford"]],childOrder:{},
       ic:["Stratford","Mile End","Liverpool Street","Bank","Holborn","Tottenham Court Road","Oxford Circus","Bond Street","Notting Hill Gate","Shepherd's Bush","Greenford","South Ruislip","West Ruislip","Ealing Broadway"],
       dirs:["Westbound","Eastbound"],legend:["to Ealing Broadway and West Ruislip","to Epping and Hainault"],labelUp:[],
       alias:[["shepherds bush central","Shepherd's Bush"]],
@@ -685,6 +687,18 @@ function render(fresh){
 
 /* ---------- Details sheet ---------- */
 var sheet=document.getElementById("sheet"), card=document.getElementById("card");
+/* Wikipedia links for stations (Central line first). Uses Wikipedia's "go" search: it opens the article when the
+   title exists (redirects included) and shows the closest results otherwise. Stations whose article has another name are listed. */
+var WIKI_TITLES={"Bank":"Bank and Monument stations","Stratford":"Stratford station","Liverpool Street":"Liverpool Street station",
+  "Bond Street":"Bond Street station","Ealing Broadway":"Ealing Broadway station","West Ruislip":"West Ruislip station",
+  "South Ruislip":"South Ruislip station","Greenford":"Greenford station","St. Paul's":"St Paul's tube station",
+  "Shepherd's Bush":"Shepherd's Bush tube station (Central line)"};
+function wikiLink(st){
+  if(!LINE.wiki||!st)return "";
+  var t=WIKI_TITLES[st]||(short(st)+" tube station");
+  var url="https://en.wikipedia.org/wiki/Special:Search?go=Go&search="+encodeURIComponent(t);
+  return '<a class="wiki" id="wiki" href="'+url+'" target="_blank" rel="noopener">About '+esc(short(st))+' station on Wikipedia <span aria-hidden="true">↗</span></a>';
+}
 function destName(t){return (t.dest&&!LINE.bus)?short(t.dest):(t.destRaw?t.destRaw.replace(/ (Underground|DLR|Rail) Station/i,""):(t.dest?short(t.dest):(LINE.bus?"Check front of bus":"Check front of train")));}
 function mins(s){var m=Math.round(s/60);return s<30?"Due":(m<1?"1 min":m+" min");}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
@@ -705,7 +719,7 @@ function refreshSheet(){
       return '<div class="dirgrp"><h3>'+LINE.dirs[d]+'</h3>'+(r.length?r.map(function(x){return '<div class="row"><span>'+esc(x.dest)+'</span><b>'+mins(x.tts)+'</b></div>';}).join(""):'<div class="empty">'+(LINE.bus?'No buses listed':'No trains listed')+'</div>')+'</div>';
     };
     h='<div class="hd"><div><h2>'+esc(short(selStn))+'</h2><div class="sub">'+(LINE.bus?'Next buses on route '+esc(LINE.btn):'Next '+esc(LINE.name)+' line trains')+'</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
-      '<div class="rows">'+grp(0)+grp(1)+'</div>';
+      '<div class="rows">'+grp(0)+grp(1)+'</div>'+wikiLink(selStn);
   }else{closeSheet();return;}
   card.innerHTML=h;
 }
@@ -962,6 +976,7 @@ window.goatcounter={no_onload:false};
 document.addEventListener("click",function(e){
   var b=e.target.closest&&e.target.closest("#lines button[data-line]");
   if(b&&window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:"line-"+b.getAttribute("data-line"),title:b.title||b.textContent,event:true});
+  if(e.target.closest&&e.target.closest("#wiki")&&window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:"wiki-click",title:"Wikipedia link",event:true});
   if(e.target.closest&&e.target.closest("#kofi")&&window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:"kofi-click",title:"Buy me a coffee",event:true});
 });
 /* Public visit total in the header: appears only if "Allow adding visitor counts" is ticked in GoatCounter settings */
