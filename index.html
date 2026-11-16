@@ -76,7 +76,12 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .train path{stroke-width:1.6;stroke-linejoin:round}
 .train.w path{fill:var(--train);stroke:var(--surface);transform:scale(1.3)}
 .train.e path{fill:var(--surface);stroke:var(--train)}
+.train.dk path{fill:#15151a;stroke:#ffffff}
+.train.dm path{fill:#00873c;stroke:#ffffff}
+.train.dt path{fill:#1f6fd1;stroke:#ffffff}
 .train.sel path{fill:var(--accent);stroke:var(--fg)}
+.destkey{display:inline-flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.destkey i{display:inline-block;width:14px;height:8px;border-radius:2px;border:1px solid var(--surface);vertical-align:0;margin-right:5px}
 .train:focus{outline:none}
 @media (prefers-reduced-motion: reduce){.train{transition:none}}
 .foot{margin:0;font-size:.8rem;color:var(--muted);max-width:70ch}
@@ -153,6 +158,7 @@ body[data-line="northern"]{--line:#15151a;--head:#15151a}
     <span><svg id="lgi0" width="20" height="12" viewBox="-10 -6 20 12" style="transform:rotate(180deg)"><path transform="scale(1.3)" d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--train)" stroke="var(--surface)" stroke-width="1.6"/></svg><span id="lg0">Westbound, to Heathrow and Uxbridge</span></span>
     <span><svg id="lgi1" width="18" height="10" viewBox="-9 -5 18 10"><path d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--surface)" stroke="var(--train)" stroke-width="1.6"/></svg><span id="lg1">Eastbound, to Cockfosters</span></span>
     <span id="taphint">Tap a train or a station for details</span>
+    <span id="destkey" class="destkey" hidden><span><i style="background:#15151a"></i>To King's Cross</span><span><i style="background:#00873c"></i>To Moorgate</span><span><i style="background:#1f6fd1"></i>Thameslink via Blackfriars</span></span>
     <span id="swipe" hidden>Swipe or scroll the map sideways to see it all</span>
   </div>
   <div class="mapwrap"><div class="mapbox" id="mapbox"><svg id="map" role="img" aria-label="Strip map with live train positions"></svg></div><div class="loading" id="loading" role="status" hidden><svg class="orbit" viewBox="-15 -15 30 30" width="30" height="30" aria-hidden="true"><circle class="track" r="10"/><circle class="sleepers" r="10"/><g class="rider"><g id="riderTrain"><rect x="-7" y="-14" width="14" height="6.5" rx="2.6" class="body"/><rect x="-5" y="-12.6" width="2.6" height="2.2" rx=".5" class="win"/><rect x="-1.3" y="-12.6" width="2.6" height="2.2" rx=".5" class="win"/><rect x="2.4" y="-12.6" width="2.6" height="2.2" rx=".5" class="win"/></g><g id="riderBus" hidden><rect x="-7" y="-15.5" width="14" height="8" rx="1.6" class="body"/><rect x="-5.6" y="-14.3" width="3" height="2.6" rx=".4" class="win"/><rect x="-1.5" y="-14.3" width="3" height="2.6" rx=".4" class="win"/><rect x="2.6" y="-14.3" width="3" height="2.6" rx=".4" class="win"/><circle cx="-4" cy="-7.4" r="1.5" class="wheel"/><circle cx="4" cy="-7.4" r="1.5" class="wheel"/></g></g></svg><span id="loadtext">Loading trains from TfL…</span></div></div>
@@ -425,8 +431,8 @@ var LINES={
       OKL:"Oakleigh Park",NSG:"New Southgate",AAP:"Alexandra Palace",HRN:"Hornsey",HGY:"Harringay",FPK:"Finsbury Park",KGX:KGX,
       DYP:"Drayton Park",HHY:"Highbury & Islington",EXR:"Essex Road",OLD:"Old Street",MOG:"Moorgate",
       STP:"St Pancras International",ZFD:"Farringdon",CTK:"City Thameslink",BFR:"London Blackfriars"};
-    return {name:"Great Northern & Thameslink",h1:"Hadley Wood line",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park","St Pancras International",KGX]},flip:true,vw:420,vcx:210,hpos:hpGN,vpos:vpGN,labelOff:{"Finsbury Park":[-40,-10]},
-      rail:true, arrUrl:"https://gn-trains.tudordesigns.workers.dev/", statusId:"great-northern", idMap:crs,
+    return {name:"Great Northern & Thameslink",h1:"Hadley Wood line",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park","St Pancras International",KGX]},flip:true,vw:420,vcx:210,hpos:hpGN,vpos:vpGN,labelOff:{"Finsbury Park":[-42,12]},labelDown:["Finsbury Park"],
+      rail:true, destColours:(function(){var d={_other:"dt"};d[KGX]="dk";d["Moorgate"]="dm";return d;})(), arrUrl:"https://gn-trains.tudordesigns.workers.dev/", statusId:"great-northern", idMap:crs,
       ic:["Welwyn Garden City","Hatfield","Hadley Wood","New Barnet","Alexandra Palace","Finsbury Park",KGX,"Highbury & Islington","Old Street","Moorgate","St Pancras International","Farringdon","City Thameslink","London Blackfriars"],
       words:[["southbound",0],["northbound",1]],
       dirs:["Southbound","Northbound"],legend:["to Moorgate, King's Cross and Thameslink","to Welwyn Garden City"],labelUp:[],
@@ -629,7 +635,7 @@ function layout(){
     var W=Math.max(LINE.forceH&&w<860?LINE.forceH:860,w-2,LINE.minW||0), xR=W-125, xL=34, sp=(xR-xL)/maxU, rh=LINE.hrow||64, ty=(LINE.htop||138)+vmax*rh, fl=!!LINE.flip;
     return {mode:"h",W:W,H:Math.round(ty-vmin*rh+(vmin<0?120:40)),sw:5,
       pt:function(n){return {x:fl?xL+U(n)*sp:xR-U(n)*sp,y:ty-V(n)*rh};},
-      side:function(n){return (V(n)<0.5&&V(n)!==0&&!up.has(n))?1:-1;}};
+      side:function(n){if(LINE.labelDown&&LINE.labelDown.indexOf(n)>=0)return 1;return (V(n)<0.5&&V(n)!==0&&!up.has(n))?1:-1;}};
   }
   var cx=LINE.vcx||(vmin<0?150:110);
   return {mode:"v",W:LINE.vw||360,H:28+maxU*24+28,sw:6,
@@ -689,6 +695,12 @@ function trainGeom(t,now){
   var x=A.x+(B.x-A.x)*p+hy*OFF, y=A.y+(B.y-A.y)*p-hx*OFF;
   return {x:x,y:y,a:Math.atan2(hy,hx)*180/Math.PI};
 }
+/* Lines that colour London-bound trains by where they finish (the Hadley Wood line) */
+function destClass(t){
+  if(!LINE.destColours||t.dir!==0)return "";
+  var d=LINE.destColours, k=t.dest&&d[t.dest]?d[t.dest]:d._other;
+  return k?" "+k:"";
+}
 function render(fresh){
   if(!LY||!trainLayer)return;
   var now=Date.now(), seen=new Set(), n=[0,0];
@@ -702,7 +714,7 @@ function render(fresh){
       gTrains.set(key,g);
     }
     var gm=trainGeom(t,now);
-    g.setAttribute("class","train "+(t.dir===0?"w":"e")+(key===selTrain?" sel":"")+((isNew||fresh)?" fresh":""));
+    g.setAttribute("class","train "+(t.dir===0?"w":"e")+destClass(t)+(key===selTrain?" sel":"")+((isNew||fresh)?" fresh":""));
     g.setAttribute("aria-label",(LINE.bus?"Bus to ":"Train to ")+destName(t)+", next stop "+short(t.next));
     g.style.transform="translate("+gm.x.toFixed(1)+"px,"+gm.y.toFixed(1)+"px) rotate("+gm.a.toFixed(0)+"deg)";
     if(isNew||fresh){void g.getBoundingClientRect();requestAnimationFrame(function(){g.classList.remove("fresh");});}
@@ -953,6 +965,7 @@ function setLine(id,save){
     try{history.replaceState(null,"","#"+id);}catch(e){}
   }
   document.querySelectorAll(".vword").forEach(function(x){x.textContent=LINE.bus?"bus":"train";});
+  document.getElementById("destkey").hidden=!LINE.destColours;
   document.getElementById("srcword").textContent=LINE.rail?"live departure times":"TfL arrival predictions";
   document.getElementById("attrib").textContent=LINE.rail?"Train data from National Rail (Rail Delivery Group), line status from TfL.":"Powered by TfL Open Data.";
   document.getElementById("demo").hidden=!demo||!!LINE.bus;
