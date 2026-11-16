@@ -412,12 +412,20 @@ var LINES={
     chain(L,["St Pancras International","Farringdon","City Thameslink","London Blackfriars"],13.5,1,1,"Finsbury Park");
     chain(L,["Drayton Park","Highbury & Islington","Essex Road","Old Street","Moorgate"],13,1,-1,"Finsbury Park");
     /* National Rail station codes, so trains from the go-between land on the right stop */
-    var hpGN={}; hpGN[KGX]=[12.22,2.2];   /* wide screens: King's Cross rises almost straight up, clear of the Finsbury Park label */
+    /* Wide screens: King's Cross climbs at 45 degrees, Moorgate runs straight on, Thameslink drops at 45 degrees. */
+    var hpGN={}; hpGN[KGX]=[13,1];
+    ["Drayton Park","Highbury & Islington","Essex Road","Old Street","Moorgate"].forEach(function(n,i){hpGN[n]=[13+i,0];});
+    ["St Pancras International","Farringdon","City Thameslink","London Blackfriars"].forEach(function(n,i){hpGN[n]=[13+i,-1];});
+    /* Phones: the same shape turned upright. Moorgate carries straight down (a longer first step leaves room for the
+       King's Cross label), King's Cross angles off to the right at 45 degrees, Thameslink angles left then runs down. */
+    var vpGN={}; vpGN[KGX]=[13.33,1];
+    ["Drayton Park","Highbury & Islington","Essex Road","Old Street","Moorgate"].forEach(function(n,i){vpGN[n]=[14+i,0];});
+    ["St Pancras International","Farringdon","City Thameslink","London Blackfriars"].forEach(function(n,i){vpGN[n]=[13.33+i,-1];});
     var crs={WGC:"Welwyn Garden City",HAT:"Hatfield",WMG:"Welham Green",BPK:"Brookmans Park",PBR:"Potters Bar",HDW:"Hadley Wood",NBA:"New Barnet",
       OKL:"Oakleigh Park",NSG:"New Southgate",AAP:"Alexandra Palace",HRN:"Hornsey",HGY:"Harringay",FPK:"Finsbury Park",KGX:KGX,
       DYP:"Drayton Park",HHY:"Highbury & Islington",EXR:"Essex Road",OLD:"Old Street",MOG:"Moorgate",
       STP:"St Pancras International",ZFD:"Farringdon",CTK:"City Thameslink",BFR:"London Blackfriars"};
-    return {name:"Great Northern & Thameslink",h1:"Hadley Wood line",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park","St Pancras International",KGX]},flip:true,vw:420,vcx:180,hpos:hpGN,
+    return {name:"Great Northern & Thameslink",h1:"Hadley Wood line",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park","St Pancras International",KGX]},flip:true,vw:420,vcx:210,hpos:hpGN,vpos:vpGN,labelOff:{"Finsbury Park":[-40,-10]},
       rail:true, arrUrl:"https://gn-trains.tudordesigns.workers.dev/", statusId:"great-northern", idMap:crs,
       ic:["Welwyn Garden City","Hatfield","Hadley Wood","New Barnet","Alexandra Palace","Finsbury Park",KGX,"Highbury & Islington","Old Street","Moorgate","St Pancras International","Farringdon","City Thameslink","London Blackfriars"],
       words:[["southbound",0],["northbound",1]],
@@ -652,7 +660,7 @@ function drawMap(){
       el("circle",{"class":"hit",cx:p.x,cy:p.y,r:12},g);
       if(ic)el("circle",{"class":"ic",cx:p.x,cy:p.y,r:5},g);
       else{if(LINE.casing)el("line",{"class":"case","stroke-width":5,x1:p.x,y1:p.y,x2:p.x,y2:p.y+sd*8},g);el("line",{"class":"tick","stroke-width":3,x1:p.x,y1:p.y,x2:p.x,y2:p.y+sd*7},g);}
-      var lx=p.x+3, ly=p.y+sd*17;
+      var lo=(LINE.labelOff||{})[n], lx=p.x+(lo?lo[0]:3), ly=p.y+(lo?lo[1]:sd*17);
       lbl=el("text",{"class":"lbl"+(ic?" ic-l":""),x:lx,y:ly,transform:"rotate("+(sd<0?-45:45)+" "+lx+" "+ly+")"},g);
       if(sd>0)lbl.setAttribute("dy","0.7em");
     }
