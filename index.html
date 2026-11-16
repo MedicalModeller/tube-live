@@ -407,19 +407,23 @@ var LINES={
   greatnorthern:(function(){
     var L=[], KGX="London King's Cross";
     chain(L,["Welwyn Garden City","Hatfield","Welham Green","Brookmans Park","Potters Bar","Hadley Wood","New Barnet","Oakleigh Park","New Southgate","Alexandra Palace","Hornsey","Harringay","Finsbury Park"],0,1,0,null);
-    L.push([KGX,13.5,1,"Finsbury Park"]);
+    /* King's Cross climbs steeply and Thameslink leaves at a shallow angle, so the Finsbury Park label sits in the gap between them */
+    L.push([KGX,12.9,2.2,"Finsbury Park"]);
+    chain(L,["St Pancras International","Farringdon","City Thameslink","London Blackfriars"],13.5,1,1,"Finsbury Park");
     chain(L,["Drayton Park","Highbury & Islington","Essex Road","Old Street","Moorgate"],13,1,-1,"Finsbury Park");
     /* National Rail station codes, so trains from the go-between land on the right stop */
+    var hpGN={}; hpGN[KGX]=[12.22,2.2];   /* wide screens: King's Cross rises almost straight up, clear of the Finsbury Park label */
     var crs={WGC:"Welwyn Garden City",HAT:"Hatfield",WMG:"Welham Green",BPK:"Brookmans Park",PBR:"Potters Bar",HDW:"Hadley Wood",NBA:"New Barnet",
       OKL:"Oakleigh Park",NSG:"New Southgate",AAP:"Alexandra Palace",HRN:"Hornsey",HGY:"Harringay",FPK:"Finsbury Park",KGX:KGX,
-      DYP:"Drayton Park",HHY:"Highbury & Islington",EXR:"Essex Road",OLD:"Old Street",MOG:"Moorgate"};
-    return {name:"Great Northern",h1:"Great Northern",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park",KGX]},flip:true,vw:420,vcx:180,
+      DYP:"Drayton Park",HHY:"Highbury & Islington",EXR:"Essex Road",OLD:"Old Street",MOG:"Moorgate",
+      STP:"St Pancras International",ZFD:"Farringdon",CTK:"City Thameslink",BFR:"London Blackfriars"};
+    return {name:"Great Northern & Thameslink",h1:"Hadley Wood line",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park","St Pancras International",KGX]},flip:true,vw:420,vcx:180,hpos:hpGN,
       rail:true, arrUrl:"https://gn-trains.tudordesigns.workers.dev/", statusId:"great-northern", idMap:crs,
-      ic:["Welwyn Garden City","Hatfield","Hadley Wood","New Barnet","Alexandra Palace","Finsbury Park",KGX,"Highbury & Islington","Old Street","Moorgate"],
+      ic:["Welwyn Garden City","Hatfield","Hadley Wood","New Barnet","Alexandra Palace","Finsbury Park",KGX,"Highbury & Islington","Old Street","Moorgate","St Pancras International","Farringdon","City Thameslink","London Blackfriars"],
       words:[["southbound",0],["northbound",1]],
-      dirs:["Southbound","Northbound"],legend:["to Moorgate and King's Cross","to Welwyn Garden City"],labelUp:[],
-      alias:[["london kings cross",KGX],["kings cross",KGX],["hatfield herts","Hatfield"]],
-      sim:[["Welwyn Garden City","Moorgate",6],["Welwyn Garden City",KGX,3]]};
+      dirs:["Southbound","Northbound"],legend:["to Moorgate, King's Cross and Thameslink","to Welwyn Garden City"],labelUp:[],
+      alias:[["london kings cross",KGX],["kings cross",KGX],["hatfield herts","Hatfield"],["st pancras","St Pancras International"],["st pancras intl","St Pancras International"],["blackfriars","London Blackfriars"]],
+      sim:[["Welwyn Garden City","Moorgate",5],["Welwyn Garden City",KGX,2],["Welwyn Garden City","London Blackfriars",3]]};
   })(),
   central:(function(){
     var L=[];
@@ -547,7 +551,7 @@ function makeTrain(key,p){
   if(!prev)prev=defaultPrev(next,dest,away);
   return {key:key,away:away,dir:labelOf(p,away),next:next,prev:prev,tts:p.timeToStation,mode:mode,
     seg:mode==="atprev"?Math.max(p.timeToStation,90):SEG_SECS,
-    dest:dest,destRaw:p.destinationName||p.towards||"",loc:p.currentLocation||""};
+    dest:dest,destRaw:p.destinationName||p.towards||"",loc:p.currentLocation||"",op:p.operator||""};
 }
 function routeHint(p,others){
   var t=String((p.towards||"")+" "+(p.destinationName||"")).toLowerCase();
@@ -724,7 +728,7 @@ function refreshSheet(){
   var el=(Date.now()-fetchedAt)/1000, h="";
   if(selTrain&&trains.has(selTrain)){
     var t=trains.get(selTrain), tts=Math.max(0,t.tts-el);
-    h='<div class="hd"><div><h2>'+(LINE.bus?'Bus to ':'Train to ')+esc(destName(t))+'</h2><div class="sub">'+LINE.dirs[t.dir]+(t.key.charAt(0)==="~"?"":(LINE.bus?' · bus ':' · train ')+esc(t.key))+'</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
+    h='<div class="hd"><div><h2>'+(LINE.bus?'Bus to ':(t.op?esc(t.op)+' to ':'Train to '))+esc(destName(t))+'</h2><div class="sub">'+LINE.dirs[t.dir]+(t.key.charAt(0)==="~"?"":(LINE.bus?' · bus ':' · train ')+esc(t.key))+'</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
       '<dl class="kv"><dt>Next stop</dt><dd><b>'+esc(short(t.next))+'</b> · '+mins(tts)+'</dd>'+
       (t.loc?'<dt>Reported</dt><dd>'+esc(t.loc)+'</dd>':'')+'</dl>';
   }else if(selStn&&S[selStn]){
