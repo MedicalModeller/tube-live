@@ -431,7 +431,7 @@ var LINES={
       OKL:"Oakleigh Park",NSG:"New Southgate",AAP:"Alexandra Palace",HRN:"Hornsey",HGY:"Harringay",FPK:"Finsbury Park",KGX:KGX,
       DYP:"Drayton Park",HHY:"Highbury & Islington",EXR:"Essex Road",OLD:"Old Street",MOG:"Moorgate",
       STP:"St Pancras International",ZFD:"Farringdon",CTK:"City Thameslink",BFR:"London Blackfriars"};
-    return {name:"Great Northern & Thameslink",h1:"Hadley Wood line",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park","St Pancras International",KGX]},flip:true,vw:420,vcx:210,hpos:hpGN,vpos:vpGN,labelOff:{"Finsbury Park":[-42,12]},labelDown:["Finsbury Park"],
+    return {name:"Great Northern & Thameslink",h1:"Hadley Wood line",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park","St Pancras International",KGX]},flip:true,vw:420,vcx:210,hpos:hpGN,vpos:vpGN,labelEnd:{"Finsbury Park":[-7,13]},
       rail:true, destColours:(function(){var d={_other:"dt"};d[KGX]="dk";d["Moorgate"]="dm";return d;})(), arrUrl:"https://gn-trains.tudordesigns.workers.dev/", statusId:"great-northern", idMap:crs,
       ic:["Welwyn Garden City","Hatfield","Hadley Wood","New Barnet","Alexandra Palace","Finsbury Park",KGX,"Highbury & Islington","Old Street","Moorgate","St Pancras International","Farringdon","City Thameslink","London Blackfriars"],
       words:[["southbound",0],["northbound",1]],
@@ -666,6 +666,12 @@ function drawMap(){
       el("circle",{"class":"hit",cx:p.x,cy:p.y,r:12},g);
       if(ic)el("circle",{"class":"ic",cx:p.x,cy:p.y,r:5},g);
       else{if(LINE.casing)el("line",{"class":"case","stroke-width":5,x1:p.x,y1:p.y,x2:p.x,y2:p.y+sd*8},g);el("line",{"class":"tick","stroke-width":3,x1:p.x,y1:p.y,x2:p.x,y2:p.y+sd*7},g);}
+      var le=(LINE.labelEnd||{})[n];
+      if(le){   /* label below-left of the station, reading up towards it and ending at it */
+        lx=p.x+le[0]; ly=p.y+le[1];
+        lbl=el("text",{"class":"lbl"+(ic?" ic-l":""),x:lx,y:ly,"text-anchor":"end",transform:"rotate(-45 "+lx+" "+ly+")",dy:"0.35em"},g);
+        lbl.textContent=short(n); return;
+      }
       var lo=(LINE.labelOff||{})[n], lx=p.x+(lo?lo[0]:3), ly=p.y+(lo?lo[1]:sd*17);
       lbl=el("text",{"class":"lbl"+(ic?" ic-l":""),x:lx,y:ly,transform:"rotate("+(sd<0?-45:45)+" "+lx+" "+ly+")"},g);
       if(sd>0)lbl.setAttribute("dy","0.7em");
