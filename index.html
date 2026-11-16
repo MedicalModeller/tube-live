@@ -81,6 +81,9 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .train.dt path{fill:#1f6fd1;stroke:#ffffff}
 .train.late path{stroke:#d4351c;stroke-width:2.4}
 .lateTxt{color:var(--bad);font-weight:600}
+.dirgrp.cancelled h3,.cancelled .row b{color:var(--bad)}
+.cancelled .row span{display:grid;gap:2px}
+.cancelled small{color:var(--muted);font-size:.8rem}
 .train.sel path{fill:var(--accent);stroke:var(--fg)}
 .destkey{display:inline-flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
 .destkey i{display:inline-block;width:14px;height:8px;border-radius:2px;border:1px solid var(--surface);vertical-align:0;margin-right:5px}
@@ -611,6 +614,7 @@ function ingest(list,at){
   raw=[];var best=new Map(), byV={}, anon=[];
   if(LINE.split)list.forEach(function(p){var k=String(p.vehicleId||"").trim();if(k&&!/^0+$/.test(k))(byV[k]=byV[k]||[]).push(p);});
   list.forEach(function(p){
+    if(!p||p.type)return;   /* messages and cancellations travel in the same list */
     var st=(LINE.idMap&&p.naptanId&&LINE.idMap[p.naptanId])||stationFrom(p.stationName); if(!st)return;
     if(LINE.split){p._hint=routeHint(p,byV[String(p.vehicleId||"").trim()]);st=fixSt(st,p._hint);}
     p._st=st; p._dest=stationFrom(p.destinationName||p.towards||""); raw.push(p);
@@ -771,9 +775,20 @@ function refreshSheet(){
       return '<div class="dirgrp"><h3>'+LINE.dirs[d]+'</h3>'+(r.length?r.map(function(x){return '<div class="row"><span>'+esc(x.dest)+'</span><b>'+mins(x.tts)+'</b></div>';}).join(""):'<div class="empty">'+(LINE.bus?'No buses listed':'No trains listed')+'</div>')+'</div>';
     };
     h='<div class="hd"><div><h2>'+esc(short(selStn))+'</h2><div class="sub">'+(LINE.bus?'Next buses on route '+esc(LINE.btn):'Next '+esc(LINE.name)+' line trains')+'</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
-      '<div class="rows">'+grp(0)+grp(1)+'</div>'+wikiLink(selStn);
+      '<div class="rows">'+grp(0)+grp(1)+cancelGrp(selStn)+'</div>'+wikiLink(selStn);
   }else{closeSheet();return;}
   card.innerHTML=h;
+}
+/* Cancelled trains at a station (Hadley Wood line), soonest first */
+function cancelGrp(st){
+  if(!LINE.rail||!railCancels.length)return "";
+  var r=railCancels.filter(function(c){return (LINE.idMap[c.naptanId]||stationFrom(c.stationName))===st;})
+    .sort(function(a,b){return a.sched<b.sched?-1:1;}).slice(0,4);
+  if(!r.length)return "";
+  return '<div class="dirgrp cancelled"><h3>Cancelled</h3>'+r.map(function(c){
+    var why=c.reason?String(c.reason).replace(/^this train has been cancelled /i,""):"";
+    return '<div class="row"><span><s>'+esc(c.sched)+' '+esc(c.destinationName)+'</s>'+(why?'<small>'+esc(why.charAt(0).toUpperCase()+why.slice(1))+'</small>':'')+'</span><b>Cancelled</b></div>';
+  }).join("")+'</div>';
 }
 function openSheet(){sheet.hidden=false;refreshSheet();}
 function closeSheet(){selTrain=null;selStn=null;sheet.hidden=true;markSel();}
@@ -852,6 +867,7 @@ function poll(){
     if(LINE.rail&&Array.isArray(list)){
       var mm=list.filter(function(x){return x&&x.type==="messages";})[0];
       railMsgHtml=(mm&&mm.messages||[]).map(function(m){return "<p><b>National Rail:</b> "+esc(m)+"</p>";}).join("");
+      railCancels=list.filter(function(x){return x&&x.type==="cancel";});
       drawAlert();
     }
     if(statusEl.textContent==="Reconnecting"||statusEl.textContent==="Connecting")setStatus("Live","");
@@ -881,7 +897,7 @@ function pollStatus(){
   }).catch(function(){});
 }
 /* The disruption banner: TfL's line status plus, on the Hadley Wood line, National Rail's station messages. */
-var statusHtml="", statusBad=false, railMsgHtml="";
+var statusHtml="", statusBad=false, railMsgHtml="", railCancels=[];
 function drawAlert(){
   var ab=document.getElementById("alert"), tx=document.getElementById("alertText"), h=statusHtml+railMsgHtml;
   tx.innerHTML=h; ab.className="alert"+(statusBad?" bad":""); ab.hidden=!h;
@@ -976,7 +992,7 @@ function setLine(id,save){
   document.getElementById("lgi1").style.transform=LINE.flip?"rotate(180deg)":"none";
   document.querySelectorAll("#lines button").forEach(function(b){b.setAttribute("aria-pressed",String(b.getAttribute("data-line")===id));});
   trains=new Map(); raw=[]; fetchedAt=0; selTrain=null; selStn=null; sheet.hidden=true;
-  document.getElementById("alert").hidden=true; statusHtml=""; statusBad=false; railMsgHtml="";
+  document.getElementById("alert").hidden=true; statusHtml=""; statusBad=false; railMsgHtml=""; railCancels=[];
   if(demo)sim=makeSim(); else setStatus("Connecting","");
   try{localStorage.setItem("tube-live-"+mode,id);}catch(e){}
   if(save){
