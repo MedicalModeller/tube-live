@@ -1,8 +1,8 @@
 <!doctype html>
 <!-- Tube Live (tube.trent-park.org) by TudorDesigns
-     Version: 29 October 2026. Tube (11 lines), Overground (6 lines), DLR, Elizabeth line and buses 13, 21, 30, 38, 56, 73, 76, 113, 121, 141, 299, 307, 341, 377, 476 and N91, with a switch between them; Ko-fi button (ko-fi.com/tudormodeller); GoatCounter visit tracking (tudormodeller.goatcounter.com).
+     Version: 29 October 2026. Tube (11 lines), Overground (6 lines), DLR, Elizabeth line, Great Northern (via National Rail) and buses 13, 21, 30, 38, 56, 73, 76, 113, 121, 141, 299, 307, 341, 377, 476 and N91, with a switch between them; Ko-fi button (ko-fi.com/tudormodeller); GoatCounter visit tracking (tudormodeller.goatcounter.com).
      Questions, ideas or bugs: https://github.com/MedicalModeller/tube-live/issues -->
-<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for every London Underground, Overground, DLR and Elizabeth line, plus buses 13, 21, 30, 38, 56, 73, 76, 113, 121, 141, 299, 307, 341, 377, 476 and N91, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: live trains on every Tube, Overground, DLR and Elizabeth line"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for every London Underground, Overground, DLR and Elizabeth line, the Great Northern from Hadley Wood, plus buses 13, 21, 30, 38, 56, 73, 76, 113, 121, 141, 299, 307, 341, 377, 476 and N91, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: live trains on every Tube, Overground, DLR and Elizabeth line"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
 <title>Tube Live: live Tube, Overground, DLR and Elizabeth line train map</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -160,7 +160,7 @@ body[data-line="northern"]{--line:#15151a;--head:#15151a}
     <a class="kofi" id="kofi" href="https://ko-fi.com/tudormodeller" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3.5c0 1 1 1.2 1 2.2M12 3.5c0 1 1 1.2 1 2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Buy me a coffee</a>
     <span>Tube Live is free to use. If it helps you, a coffee keeps it going.</span>
   </div>
-  <p class="foot">Positions are estimated from TfL arrival predictions, so a <span class="vword">train</span> can lag or jump a little between updates. Refreshes every 15 seconds. Powered by TfL Open Data. Built by TudorDesigns.</p>
+  <p class="foot">Positions are estimated from <span id="srcword">TfL arrival predictions</span>, so a <span class="vword">train</span> can lag or jump a little between updates. Refreshes every 15 seconds. <span id="attrib">Powered by TfL Open Data.</span> Built by TudorDesigns.</p>
 </main>
 
 <aside id="sheet" class="sheet" hidden><div class="card" id="card" role="dialog" aria-live="polite"></div></aside>
@@ -404,6 +404,23 @@ var LINES={
       sim:[["Reading","Abbey Wood",4],["Heathrow Terminal 5","Abbey Wood",4],["Paddington","Shenfield",5],["Heathrow Terminal 4","Shenfield",2],["Maidenhead","Shenfield",2]]};
   })(),
   bus21:busRoute("21",null,{swap:true}), bus30:busRoute("30",null,{outTo:"hackney wick"}), bus38:busRoute("38",null,{swap:true}), bus73:busRoute("73"), bus341:busRoute("341",null,{swap:true}), bus476:busRoute("476",null,{swap:true}), bus76:busRoute("76",null,{swap:true}), bus13:busRoute("13",null,{swap:true}), bus56:busRoute("56",null,{outTo:"whipps cross",legend:["to Whipps Cross Bus Stand","to St Bart's Hospital"]}), bus113:busRoute("113",null,{swap:true}), bus121:busRoute("121",null,{swap:true}), bus141:busRoute("141",null,{swap:true}), bus299:busRoute("299"), bus307:busRoute("307"), bus377:busRoute("377"), busn91:busRoute("N91","n91"),
+  greatnorthern:(function(){
+    var L=[], KGX="London King's Cross";
+    chain(L,["Welwyn Garden City","Hatfield","Welham Green","Brookmans Park","Potters Bar","Hadley Wood","New Barnet","Oakleigh Park","New Southgate","Alexandra Palace","Hornsey","Harringay","Finsbury Park"],0,1,0,null);
+    L.push([KGX,13.5,1,"Finsbury Park"]);
+    chain(L,["Drayton Park","Highbury & Islington","Essex Road","Old Street","Moorgate"],13,1,-1,"Finsbury Park");
+    /* National Rail station codes, so trains from the go-between land on the right stop */
+    var crs={WGC:"Welwyn Garden City",HAT:"Hatfield",WMG:"Welham Green",BPK:"Brookmans Park",PBR:"Potters Bar",HDW:"Hadley Wood",NBA:"New Barnet",
+      OKL:"Oakleigh Park",NSG:"New Southgate",AAP:"Alexandra Palace",HRN:"Hornsey",HGY:"Harringay",FPK:"Finsbury Park",KGX:KGX,
+      DYP:"Drayton Park",HHY:"Highbury & Islington",EXR:"Essex Road",OLD:"Old Street",MOG:"Moorgate"};
+    return {name:"Great Northern",h1:"Great Northern",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park",KGX]},flip:true,vw:420,vcx:180,
+      rail:true, arrUrl:"https://gn-trains.tudordesigns.workers.dev/", statusId:"great-northern", idMap:crs,
+      ic:["Welwyn Garden City","Hatfield","Hadley Wood","New Barnet","Alexandra Palace","Finsbury Park",KGX,"Highbury & Islington","Old Street","Moorgate"],
+      words:[["southbound",0],["northbound",1]],
+      dirs:["Southbound","Northbound"],legend:["to Moorgate and King's Cross","to Welwyn Garden City"],labelUp:[],
+      alias:[["london kings cross",KGX],["kings cross",KGX],["hatfield herts","Hatfield"]],
+      sim:[["Welwyn Garden City","Moorgate",6],["Welwyn Garden City",KGX,3]]};
+  })(),
   central:(function(){
     var L=[];
     chain(L,["Epping","Theydon Bois","Debden","Loughton","Buckhurst Hill","Woodford"],0,1,1,null);
@@ -426,6 +443,7 @@ var MODES=[
   {id:"overground",name:"Overground",lines:["liberty","lioness","mildmay","suffragette","weaver","windrush"]},
   {id:"dlr",name:"DLR",lines:["dlr"]},
   {id:"elizabeth",name:"Elizabeth",lines:["elizabeth"]},
+  {id:"rail",name:"Rail",lines:["greatnorthern"]},
   {id:"bus",name:"Buses",lines:["bus13","bus21","bus30","bus38","bus56","bus73","bus76","bus113","bus121","bus141","bus299","bus307","bus341","bus377","bus476","busn91"]}];
 var LINE_ORDER=[], MODE_OF={};
 MODES.forEach(function(m){m.lines.forEach(function(id){LINE_ORDER.push(id);MODE_OF[id]=m.id;});});
@@ -785,7 +803,7 @@ function showLoading(){
   }
 }
 var everOk=false, failCount=0, demo=/demo/.test(location.hash), sim=null, gen=0, statusEl=document.getElementById("status");
-function api(path){return "https://api.tfl.gov.uk/Line/"+(LINE.api||LINE_ID)+"/"+path;}
+function api(path){if(path==="Arrivals"&&LINE.arrUrl)return LINE.arrUrl;return "https://api.tfl.gov.uk/Line/"+(LINE.statusId||LINE.api||LINE_ID)+"/"+path;}
 function setStatus(text,cls){statusEl.textContent=text;statusEl.className="pill "+(cls||"");}
 function getJSON(url,ms){
   var ac=new AbortController(), to=setTimeout(function(){ac.abort();},ms||10000);
@@ -923,6 +941,8 @@ function setLine(id,save){
     try{history.replaceState(null,"","#"+id);}catch(e){}
   }
   document.querySelectorAll(".vword").forEach(function(x){x.textContent=LINE.bus?"bus":"train";});
+  document.getElementById("srcword").textContent=LINE.rail?"live departure times":"TfL arrival predictions";
+  document.getElementById("attrib").textContent=LINE.rail?"Train data from National Rail (Rail Delivery Group), line status from TfL.":"Powered by TfL Open Data.";
   document.getElementById("demo").hidden=!demo||!!LINE.bus;
   document.getElementById("taphint").textContent=LINE.bus?"Tap a bus or a stop for details":"Tap a train or a station for details";
   document.getElementById("busnote").hidden=true;
