@@ -79,6 +79,7 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .train.dk path{fill:#15151a;stroke:#ffffff}
 .train.dm path{fill:#00873c;stroke:#ffffff}
 .train.dt path{fill:#1f6fd1;stroke:#ffffff}
+.train.de path{fill:#9b4fb5;stroke:#ffffff}
 .train.late path{stroke:#d4351c;stroke-width:2.4}
 .lateTxt{color:var(--bad);font-weight:600}
 .dirgrp.cancelled h3,.cancelled .row b{color:var(--bad)}
@@ -163,7 +164,7 @@ body[data-line="northern"]{--line:#15151a;--head:#15151a}
     <span><svg id="lgi0" width="20" height="12" viewBox="-10 -6 20 12" style="transform:rotate(180deg)"><path transform="scale(1.3)" d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--train)" stroke="var(--surface)" stroke-width="1.6"/></svg><span id="lg0">Westbound, to Heathrow and Uxbridge</span></span>
     <span><svg id="lgi1" width="18" height="10" viewBox="-9 -5 18 10"><path d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--surface)" stroke="var(--train)" stroke-width="1.6"/></svg><span id="lg1">Eastbound, to Cockfosters</span></span>
     <span id="taphint">Tap a train or a station for details</span>
-    <span id="destkey" class="destkey" hidden><span><i style="background:#15151a"></i>To King's Cross</span><span><i style="background:#00873c"></i>To Moorgate</span><span><i style="background:#1f6fd1"></i>Thameslink via Blackfriars</span><span><i style="background:transparent;border:2px solid #d4351c"></i>Red edge: running late</span></span>
+    <span id="destkey" class="destkey" hidden></span>
     <span id="swipe" hidden>Swipe or scroll the map sideways to see it all</span>
   </div>
   <div class="mapwrap"><div class="mapbox" id="mapbox"><svg id="map" role="img" aria-label="Strip map with live train positions"></svg></div><div class="loading" id="loading" role="status" hidden><svg class="orbit" viewBox="-15 -15 30 30" width="30" height="30" aria-hidden="true"><circle class="track" r="10"/><circle class="sleepers" r="10"/><g class="rider"><g id="riderTrain"><rect x="-7" y="-14" width="14" height="6.5" rx="2.6" class="body"/><rect x="-5" y="-12.6" width="2.6" height="2.2" rx=".5" class="win"/><rect x="-1.3" y="-12.6" width="2.6" height="2.2" rx=".5" class="win"/><rect x="2.4" y="-12.6" width="2.6" height="2.2" rx=".5" class="win"/></g><g id="riderBus" hidden><rect x="-7" y="-15.5" width="14" height="8" rx="1.6" class="body"/><rect x="-5.6" y="-14.3" width="3" height="2.6" rx=".4" class="win"/><rect x="-1.5" y="-14.3" width="3" height="2.6" rx=".4" class="win"/><rect x="2.6" y="-14.3" width="3" height="2.6" rx=".4" class="win"/><circle cx="-4" cy="-7.4" r="1.5" class="wheel"/><circle cx="4" cy="-7.4" r="1.5" class="wheel"/></g></g></svg><span id="loadtext">Loading trains from TfL…</span></div></div>
@@ -315,7 +316,9 @@ var LINES={
     chain(L,["Edmonton Green","Silver Street","White Hart Lane","Bruce Grove","Seven Sisters","Stamford Hill","Stoke Newington","Rectory Road","Hackney Downs","London Fields","Cambridge Heath","Bethnal Green","Liverpool Street"],4,1,0,"Bush Hill Park");
     chain(L,["Southbury","Turkey Street","Theobalds Grove","Cheshunt"],3,-1,1,"Edmonton Green");
     chain(L,["Clapton","St James Street","Walthamstow Central","Wood Street","Highams Park","Chingford"],11,-1,-1,"Hackney Downs");
-    return {name:"Weaver",col:["#972861","#972861","#ffffff","#d05a95"],stations:L,extra:[],childOrder:{"Edmonton Green":["Silver Street","Southbury"],"Hackney Downs":["London Fields","Clapton"]},flip:true,vw:400,vcx:180,
+    return {name:"Weaver",hub:"Liverpool Street",destDir:1,destColours:{"Cheshunt":"dt","Enfield Town":"de","Chingford":"dm"},
+      destKey:[["#1f6fd1","To Cheshunt"],["#9b4fb5","To Enfield Town"],["#00873c","To Chingford"]],
+      col:["#972861","#972861","#ffffff","#d05a95"],stations:L,extra:[],childOrder:{"Edmonton Green":["Silver Street","Southbury"],"Hackney Downs":["London Fields","Clapton"]},flip:true,vw:400,vcx:180,
       ic:["Liverpool Street","Hackney Downs","Seven Sisters","Walthamstow Central","Cheshunt","Edmonton Green"],
       dirs:["Southbound","Northbound"],legend:["to Liverpool Street","to Enfield Town, Cheshunt and Chingford"],labelUp:[],alias:[["st james st","St James Street"]],
       sim:[["Enfield Town","Liverpool Street",5],["Cheshunt","Liverpool Street",3],["Chingford","Liverpool Street",5]]};
@@ -437,7 +440,8 @@ var LINES={
       DYP:"Drayton Park",HHY:"Highbury & Islington",EXR:"Essex Road",OLD:"Old Street",MOG:"Moorgate",
       STP:"St Pancras International",ZFD:"Farringdon",CTK:"City Thameslink",BFR:"London Blackfriars"};
     return {name:"Great Northern & Thameslink",h1:"Hadley Wood line",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park","St Pancras International",KGX]},flip:true,vw:420,vcx:210,hpos:hpGN,vpos:vpGN,labelEnd:{"Finsbury Park":[-7,13]},
-      rail:true, destColours:(function(){var d={_other:"dt"};d[KGX]="dk";d["Moorgate"]="dm";return d;})(), arrUrl:"https://gn-trains.tudordesigns.workers.dev/", statusId:"great-northern", idMap:crs,
+      rail:true, destColours:(function(){var d={_other:"dt"};d[KGX]="dk";d["Moorgate"]="dm";return d;})(),
+      destKey:[["#15151a","To King's Cross"],["#00873c","To Moorgate"],["#1f6fd1","Thameslink via Blackfriars"],["late","Red edge: running late"]], arrUrl:"https://gn-trains.tudordesigns.workers.dev/", statusId:"great-northern", idMap:crs,
       ic:["Welwyn Garden City","Hatfield","Hadley Wood","New Barnet","Alexandra Palace","Finsbury Park",KGX,"Highbury & Islington","Old Street","Moorgate","St Pancras International","Farringdon","City Thameslink","London Blackfriars"],
       words:[["southbound",0],["northbound",1]],
       dirs:["Southbound","Northbound"],legend:["to Moorgate, King's Cross and Thameslink","to Welwyn Garden City"],labelUp:[],
@@ -549,6 +553,14 @@ function awayOf(p,next,dest){
   if(dest&&dest===next)return DEPTH[next]>MAXD/2;
   return true;
 }
+/* Lines with a "hub" (the Weaver's Liverpool Street) count direction 0 as heading towards the hub and
+   direction 1 as heading away, whichever branch the train is on. Other lines use the platform or map direction. */
+function hubDist(a){var h=LINE.hub;if(!a||!S[a]||!S[h])return null;var n=0,c=a;while(c&&c!==h&&n<200){c=NH[c][h];n++;}return c===h?n:null;}
+function dirFor(p,next,dest,away){
+  if(LINE.hub&&next&&dest&&dest!==next){var a=hubDist(next),b=hubDist(dest);if(a!=null&&b!=null)return b<a?0:1;}
+  if(LINE.hub&&dest&&dest===LINE.hub)return 0;
+  return labelOf(p,away);
+}
 function labelOf(p,away){var w=wordIdx(p);return w>=0?w:(away?0:1);}
 function defaultPrev(next,dest,away){
   var hop=(dest&&dest!==next)?NH[next][dest]:null;
@@ -568,7 +580,7 @@ function makeTrain(key,p){
   if(prev&&NB[next].indexOf(prev)<0&&tw[next]&&NB[tw[next]].indexOf(prev)>=0)next=tw[next];
   if(prev&&NB[next].indexOf(prev)<0){prev=null;if(mode==="atprev")mode="move";}
   if(!prev)prev=defaultPrev(next,dest,away);
-  return {key:key,away:away,dir:labelOf(p,away),next:next,prev:prev,tts:p.timeToStation,mode:mode,
+  return {key:key,away:away,dir:dirFor(p,next,dest,away),next:next,prev:prev,tts:p.timeToStation,mode:mode,
     seg:mode==="atprev"?Math.max(p.timeToStation,90):SEG_SECS,
     dest:dest,destRaw:p.destinationName||p.towards||"",loc:p.currentLocation||"",op:p.operator||"",
     late:p.lateMins==null?null:p.lateMins,delayed:!!p.delayed,reason:p.delayReason||""};
@@ -710,7 +722,7 @@ function trainGeom(t,now){
 }
 /* Lines that colour London-bound trains by where they finish (the Hadley Wood line) */
 function destClass(t){
-  if(!LINE.destColours||t.dir!==0)return "";
+  if(!LINE.destColours||t.dir!==(LINE.destDir||0))return "";
   var d=LINE.destColours, k=t.dest&&d[t.dest]?d[t.dest]:d._other;
   return k?" "+k:"";
 }
@@ -768,7 +780,7 @@ function refreshSheet(){
   }else if(selStn&&S[selStn]){
     var list=raw.filter(function(p){return p._st===selStn;}).map(function(p){
       var t=trains.get(String(p.vehicleId||"").trim());
-      return {tts:Math.max(0,p.timeToStation-el),dest:p._dest?short(p._dest):String(p.destinationName||p.towards||(LINE.bus?"Check front of bus":"Check front of train")).replace(/ (Underground|DLR|Rail) Station/i,""),dir:t?t.dir:labelOf(p,awayOf(p,p._st,p._dest))};
+      return {tts:Math.max(0,p.timeToStation-el),dest:p._dest?short(p._dest):String(p.destinationName||p.towards||(LINE.bus?"Check front of bus":"Check front of train")).replace(/ (Underground|DLR|Rail) Station/i,""),dir:t?t.dir:dirFor(p,p._st,p._dest,awayOf(p,p._st,p._dest))};
     }).sort(function(a,b){return a.tts-b.tts;});
     var grp=function(d){
       var r=list.filter(function(x){return x.dir===d;}).slice(0,4);
@@ -1000,7 +1012,9 @@ function setLine(id,save){
     try{history.replaceState(null,"","#"+id);}catch(e){}
   }
   document.querySelectorAll(".vword").forEach(function(x){x.textContent=LINE.bus?"bus":"train";});
-  document.getElementById("destkey").hidden=!LINE.destColours;
+  var dk=document.getElementById("destkey");
+  dk.hidden=!LINE.destKey;
+  dk.innerHTML=(LINE.destKey||[]).map(function(k){return '<span><i style="'+(k[0]==="late"?'background:transparent;border:2px solid #d4351c':'background:'+k[0])+'"></i>'+esc(k[1])+'</span>';}).join("");
   document.getElementById("srcword").textContent=LINE.rail?"live departure times":"TfL arrival predictions";
   document.getElementById("attrib").textContent=LINE.rail?"Train data from National Rail (Rail Delivery Group), line status from TfL.":"Powered by TfL Open Data.";
   document.getElementById("demo").hidden=!demo||!!LINE.bus;
