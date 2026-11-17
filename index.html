@@ -80,7 +80,8 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .train.dm path{fill:#00873c;stroke:#ffffff}
 .train.dt path{fill:#1f6fd1;stroke:#ffffff}
 .train.de path{fill:#9b4fb5;stroke:#ffffff}
-.train.dk path,.train.dm path,.train.dt path,.train.de path{transform:scale(1.3)}
+.train.ds path{fill:#4fc3f7;stroke:#ffffff}
+.train.dk path,.train.dm path,.train.dt path,.train.de path,.train.ds path{transform:scale(1.3)}
 .train.late path{stroke:#d4351c;stroke-width:2.4}
 .lateTxt{color:var(--bad);font-weight:600}
 .dirgrp.cancelled h3,.cancelled .row b{color:var(--bad)}
@@ -201,7 +202,9 @@ var LINES={
     chain(L,["South Ealing","Northfields","Boston Manor","Osterley","Hounslow East","Hounslow Central","Hounslow West","Hatton Cross"],28,1,-1,"Acton Town");
     L.push([T4,36,-1.7,"Hatton Cross"],[T23,37,-1,"Hatton Cross"],[T5,38,-1,T23]);
     chain(L,["Ealing Common","North Ealing","Park Royal","Alperton","Sudbury Town","Sudbury Hill","South Harrow","Rayners Lane","Eastcote","Ruislip Manor","Ruislip","Ickenham","Hillingdon","Uxbridge"],28,1,1,"Acton Town");
-    return {name:"Piccadilly",col:["#0019a8","#0019a8","#ffffff","#6680ff"],stations:L,extra:[[T4,T23]],childOrder:{"Hatton Cross":[T23,T4]},
+    return {name:"Piccadilly",destDir:1,destColours:{"Arnos Grove":"ds","Cockfosters":"dm"},
+      destKey:[["#4fc3f7","To Arnos Grove"],["#00873c","To Cockfosters"]],
+      col:["#0019a8","#0019a8","#ffffff","#6680ff"],stations:L,extra:[[T4,T23]],childOrder:{"Hatton Cross":[T23,T4]},
       ic:["Finsbury Park",KX,"Holborn","Leicester Square","Piccadilly Circus","Green Park","South Kensington","Gloucester Road","Earl's Court","Barons Court","Hammersmith","Turnham Green","Acton Town","Ealing Common","Rayners Lane","Uxbridge",T23,T5],
       dirs:["Westbound","Eastbound"],legend:["to Heathrow and Uxbridge","to Cockfosters"],
       labelUp:[T23,T5],
