@@ -239,7 +239,7 @@ var LINES={
     chain(L,["Oval","Stockwell","Clapham North","Clapham Common","Clapham South","Balham","Tooting Bec","Tooting Broadway","Colliers Wood","South Wimbledon","Morden"],21,1,0,"Kennington");
     chain(L,["Nine Elms","Battersea Power Station"],21,1,-1,"Kennington");
     var split={}; split[EB]={bank:EB,cx:EC}; split[EC]={bank:EB,cx:EC};
-    return {name:"Northern",core:"Camden Town",coreSide:"Morden",destDir:0,
+    return {name:"Northern",core:"Camden Town",coreSide:"Morden",coreOther:"Edgware",destDir:0,
       destColours:{"Morden":"c2","Battersea Power Station":"c8","Kennington":"c10"},
       destColoursOther:{"Edgware":"c4","High Barnet":"c6","Mill Hill East":"c7","Golders Green":"c11","East Finchley":"c5","Kennington":"c10"},
       destKey:[["hdr","Southbound:"],["#1f6fd1","Morden"],["#e75480","Battersea Power Station"],["#6e7781","Kennington"],
@@ -423,10 +423,16 @@ var LINES={
        Heathrow hangs below Hayes & Harlington (T4 to the left, T5 underneath), Shenfield rises above, Abbey Wood drops below. */
     var hp={};
     ["Reading","Twyford","Maidenhead","Taplow","Burnham"].forEach(function(n,i){hp[n]=[i,1.25-i*0.25];});
-    hp[T23]=[9.6,-1]; hp[T4]=[8.6,-1.9]; hp[T5]=[9.6,-1.9];
+    hp[T23]=[6.2,-1]; hp[T4]=[3.7,-1.9]; hp[T5]=[6.2,-1.9];   /* Heathrow spur leaves Hayes & Harlington at 45 degrees */
     ["Stratford","Maryland","Forest Gate","Manor Park","Ilford","Seven Kings","Goodmayes","Chadwell Heath","Romford","Gidea Park","Harold Wood","Brentwood","Shenfield"].forEach(function(n,i){hp[n]=[22+i,1];});
     ["Canary Wharf","Custom House","Woolwich","Abbey Wood"].forEach(function(n,i){hp[n]=[21+i,-1];});
-    return {name:"Elizabeth",col:["#6950a1","#5a4390","#ffffff","#a08bd6"],stations:L,extra:[],childOrder:co,flip:true,vw:400,vcx:180,hpos:hp,hrow:90,
+    var lfE={}; lfE[T23]=[12,4];
+    var dcW={"Reading":"c3","Maidenhead":"c1","Paddington":"c8","Liverpool Street":"c10"}; dcW[T5]="c6"; dcW[T4]="c5";
+    return {name:"Elizabeth",core:"Farringdon",coreSide:"Abbey Wood",coreOther:"Reading",destDir:0,
+      destColours:{"Abbey Wood":"c2","Shenfield":"c4","Gidea Park":"c11"}, destColoursOther:dcW,
+      destKey:[["hdr","Eastbound:"],["#1f6fd1","Abbey Wood"],["#00873c","Shenfield"],["#7cb342","Gidea Park"],
+        ["hdr","Westbound:"],["#f08a00","Heathrow T5"],["#f2c500","Heathrow T4"],["#00a3a3","Reading"],["#4fc3f7","Maidenhead"],["#e75480","Paddington"],["#6e7781","Liverpool Street"]],
+      col:["#6950a1","#5a4390","#ffffff","#a08bd6"],stations:L,extra:[],childOrder:co,flip:true,vw:400,vcx:180,hpos:hp,hrow:90,labelFlat:lfE,
       ic:["Reading","Slough",T23,T4,T5,"Ealing Broadway","Paddington","Bond Street","Tottenham Court Road","Farringdon","Liverpool Street","Whitechapel","Stratford","Romford","Shenfield","Canary Wharf","Custom House","Woolwich","Abbey Wood"],
       dirs:["Eastbound","Westbound"],legend:["to Abbey Wood and Shenfield","to Reading and Heathrow"],labelUp:["Burnham"],
       alias:[["heathrow terminals 2 and 3",T23],["heathrow terminals 2 3",T23],["heathrow terminal 2 and 3",T23],["heathrow terminals 123",T23],["heathrow t2 and 3",T23],["terminals 2 and 3",T23],["heathrow t4",T4],["terminal 4",T4],["heathrow t5",T5],["terminal 5",T5]],
@@ -471,7 +477,7 @@ var LINES={
     chain(L,["Hanger Lane","Perivale","Greenford","Northolt","South Ruislip","Ruislip Gardens","West Ruislip"],38,1,1,"North Acton");
     chain(L,["West Acton","Ealing Broadway"],38,1,-1,"North Acton");
     chain(L,["Wanstead","Redbridge","Gants Hill","Newbury Park","Barkingside","Fairlop","Hainault","Grange Hill","Chigwell","Roding Valley"],15,-1,-1,"Leytonstone");
-    return {name:"Central",wiki:true,core:"Bank",coreSide:"West Ruislip",destDir:1,
+    return {name:"Central",wiki:true,core:"Bank",coreSide:"West Ruislip",coreOther:"Epping",destDir:1,
       destColours:{"Woodford":"c1","Loughton":"c2","Debden":"c3","Epping":"c4","Newbury Park":"c5","Hainault":"c6","Grange Hill":"c7"},
       destColoursOther:{"West Ruislip":"c8","Ealing Broadway":"c9","Northolt":"c10","White City":"c11"},
       destKey:[["hdr","Eastbound:"],["#4fc3f7","Woodford"],["#1f6fd1","Loughton"],["#00a3a3","Debden"],["#00873c","Epping"],["#f2c500","Newbury Park"],["#f08a00","Hainault"],["#9b4fb5","Grange Hill"],
@@ -584,7 +590,7 @@ function isHub(a){return [].concat(LINE.hub).indexOf(a)>=0;}
    and whether it is moving away from the core or towards it. coreSide is any station on the direction-0 side. */
 function coreDir(a,b){
   var c=LINE.core,da=hubDist1(a,c),db=hubDist1(b,c);if(da==null||db==null||da===db)return -1;
-  var far=db>da?b:a, w=LINE.coreSide, side0=hubDist1(far,w)<hubDist1(c,w);
+  var far=db>da?b:a, side0=(hubDist1(far,LINE.coreSide)-hubDist1(c,LINE.coreSide))<(hubDist1(far,LINE.coreOther)-hubDist1(c,LINE.coreOther));
   return (db>da)===side0?0:1;
 }
 function dirFor(p,next,dest,away,seenPrev){
