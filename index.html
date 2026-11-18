@@ -466,7 +466,7 @@ var LINES={
     chain(L,["Hanger Lane","Perivale","Greenford","Northolt","South Ruislip","Ruislip Gardens","West Ruislip"],38,1,1,"North Acton");
     chain(L,["West Acton","Ealing Broadway"],38,1,-1,"North Acton");
     chain(L,["Wanstead","Redbridge","Gants Hill","Newbury Park","Barkingside","Fairlop","Hainault","Grange Hill","Chigwell","Roding Valley"],15,-1,-1,"Leytonstone");
-    return {name:"Central",wiki:true,destDir:1,
+    return {name:"Central",wiki:true,core:"Bank",coreSide:"West Ruislip",destDir:1,
       destColours:{"Woodford":"c1","Loughton":"c2","Debden":"c3","Epping":"c4","Newbury Park":"c5","Hainault":"c6","Grange Hill":"c7"},
       destColoursOther:{"West Ruislip":"c8","Ealing Broadway":"c9","Northolt":"c10","White City":"c11"},
       destKey:[["hdr","Eastbound:"],["#4fc3f7","Woodford"],["#1f6fd1","Loughton"],["#00a3a3","Debden"],["#00873c","Epping"],["#f2c500","Newbury Park"],["#f08a00","Hainault"],["#9b4fb5","Grange Hill"],
@@ -570,10 +570,23 @@ function awayOf(p,next,dest){
 }
 /* Lines with a "hub" (the Weaver's Liverpool Street) count direction 0 as heading towards the hub and
    direction 1 as heading away, whichever branch the train is on. Other lines use the platform or map direction. */
-function hubDist(a){var h=LINE.hub;if(!a||!S[a]||!S[h])return null;var n=0,c=a;while(c&&c!==h&&n<200){c=NH[c][h];n++;}return c===h?n:null;}
-function dirFor(p,next,dest,away){
-  if(LINE.hub&&next&&dest&&dest!==next){var a=hubDist(next),b=hubDist(dest);if(a!=null&&b!=null)return b<a?0:1;}
-  if(LINE.hub&&dest&&dest===LINE.hub)return 0;
+function hubDist1(a,h){if(!a||!S[a]||!S[h])return null;var n=0,c=a;while(c&&c!==h&&n<200){c=NH[c][h];n++;}return c===h?n:null;}
+function hubDist(a){var hs=[].concat(LINE.hub),best=null;hs.forEach(function(h){var d=hubDist1(a,h);if(d!=null&&(best==null||d<best))best=d;});return best;}
+function isHub(a){return [].concat(LINE.hub).indexOf(a)>=0;}
+/* "seenPrev" is the station the train has just left, read from its reported location; when we know it,
+   the direction of travel is simply whether the train is getting nearer the hub end or further from it. */
+/* Lines with a "core" (the Central's Bank) work out direction from which side of the core the train is on
+   and whether it is moving away from the core or towards it. coreSide is any station on the direction-0 side. */
+function coreDir(a,b){
+  var c=LINE.core,da=hubDist1(a,c),db=hubDist1(b,c);if(da==null||db==null||da===db)return -1;
+  var far=db>da?b:a, w=LINE.coreSide, side0=hubDist1(far,w)<hubDist1(c,w);
+  return (db>da)===side0?0:1;
+}
+function dirFor(p,next,dest,away,seenPrev){
+  if(LINE.core&&next){var r=seenPrev&&seenPrev!==next?coreDir(seenPrev,next):-1;if(r<0&&dest&&dest!==next)r=coreDir(next,dest);if(r>=0)return r;}
+  if(LINE.hub&&next&&seenPrev&&seenPrev!==next){var x=hubDist(seenPrev),y=hubDist(next);if(x!=null&&y!=null&&x!==y)return y<x?0:1;}
+  if(LINE.hub&&next&&dest&&dest!==next){var a=hubDist(next),b=hubDist(dest);if(a!=null&&b!=null&&a!==b)return b<a?0:1;}
+  if(LINE.hub&&dest&&isHub(dest))return 0;
   return labelOf(p,away);
 }
 function labelOf(p,away){var w=wordIdx(p);return w>=0?w:(away?0:1);}
@@ -594,8 +607,9 @@ function makeTrain(key,p){
   if(prev&&NB[next].indexOf(prev)<0&&tw[prev]&&NB[next].indexOf(tw[prev])>=0)prev=tw[prev];
   if(prev&&NB[next].indexOf(prev)<0&&tw[next]&&NB[tw[next]].indexOf(prev)>=0)next=tw[next];
   if(prev&&NB[next].indexOf(prev)<0){prev=null;if(mode==="atprev")mode="move";}
+  var seenPrev=prev;
   if(!prev)prev=defaultPrev(next,dest,away);
-  return {key:key,away:away,dir:dirFor(p,next,dest,away),next:next,prev:prev,tts:p.timeToStation,mode:mode,
+  return {key:key,away:away,dir:dirFor(p,next,dest,away,seenPrev),next:next,prev:prev,tts:p.timeToStation,mode:mode,
     seg:mode==="atprev"?Math.max(p.timeToStation,90):SEG_SECS,
     dest:dest,destRaw:p.destinationName||p.towards||"",loc:p.currentLocation||"",op:p.operator||"",
     late:p.lateMins==null?null:p.lateMins,delayed:!!p.delayed,reason:p.delayReason||""};
