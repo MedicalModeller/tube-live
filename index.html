@@ -84,6 +84,8 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .train.c1 path{fill:#4fc3f7;stroke:#ffffff}.train.c2 path{fill:#1f6fd1;stroke:#ffffff}.train.c3 path{fill:#00a3a3;stroke:#ffffff}
 .train.c4 path{fill:#00873c;stroke:#ffffff}.train.c5 path{fill:#f2c500;stroke:#ffffff}.train.c6 path{fill:#f08a00;stroke:#ffffff}
 .train.c7 path{fill:#9b4fb5;stroke:#ffffff}
+.train.c8 path{fill:#e75480;stroke:#ffffff}.train.c9 path{fill:#8d5a2b;stroke:#ffffff}.train.c10 path{fill:#6e7781;stroke:#ffffff}
+.train.c11 path{fill:#7cb342;stroke:#ffffff}
 .train.dk path,.train.dm path,.train.dt path,.train.de path,.train.ds path,.train[class*=" c"] path{transform:scale(1.3)}
 .train.late path{stroke:#d4351c;stroke-width:2.4}
 .lateTxt{color:var(--bad);font-weight:600}
@@ -92,6 +94,7 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .cancelled small{color:var(--muted);font-size:.8rem}
 .train.sel path{fill:var(--accent);stroke:var(--fg)}
 .destkey{display:inline-flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.destkey .dkh{font-weight:600}.destkey .dkbr{flex-basis:100%;height:0}
 .destkey i{display:inline-block;width:14px;height:8px;border-radius:2px;border:1px solid var(--surface);vertical-align:0;margin-right:5px}
 .train:focus{outline:none}
 @media (prefers-reduced-motion: reduce){.train{transition:none}}
@@ -465,7 +468,9 @@ var LINES={
     chain(L,["Wanstead","Redbridge","Gants Hill","Newbury Park","Barkingside","Fairlop","Hainault","Grange Hill","Chigwell","Roding Valley"],15,-1,-1,"Leytonstone");
     return {name:"Central",wiki:true,destDir:1,
       destColours:{"Woodford":"c1","Loughton":"c2","Debden":"c3","Epping":"c4","Newbury Park":"c5","Hainault":"c6","Grange Hill":"c7"},
-      destKey:[["#4fc3f7","Woodford"],["#1f6fd1","Loughton"],["#00a3a3","Debden"],["#00873c","Epping"],["#f2c500","Newbury Park"],["#f08a00","Hainault"],["#9b4fb5","Grange Hill"]],
+      destColoursOther:{"West Ruislip":"c8","Ealing Broadway":"c9","Northolt":"c10","White City":"c11"},
+      destKey:[["hdr","Eastbound:"],["#4fc3f7","Woodford"],["#1f6fd1","Loughton"],["#00a3a3","Debden"],["#00873c","Epping"],["#f2c500","Newbury Park"],["#f08a00","Hainault"],["#9b4fb5","Grange Hill"],
+        ["hdr","Westbound:"],["#e75480","West Ruislip"],["#8d5a2b","Ealing Broadway"],["#6e7781","Northolt"],["#7cb342","White City"]],
       col:["#d2042d","#b00327","#ffffff","#ff4d6d"],stations:L,extra:[["Roding Valley","Woodford"]],childOrder:{},
       ic:["Stratford","Mile End","Liverpool Street","Bank","Holborn","Tottenham Court Road","Oxford Circus","Bond Street","Notting Hill Gate","Shepherd's Bush","Greenford","South Ruislip","West Ruislip","Ealing Broadway"],
       dirs:["Westbound","Eastbound"],legend:["to Ealing Broadway and West Ruislip","to Epping and Hainault"],labelUp:[],
@@ -732,8 +737,9 @@ function trainGeom(t,now){
 }
 /* Lines that colour London-bound trains by where they finish (the Hadley Wood line) */
 function destClass(t){
-  if(!LINE.destColours||t.dir!==(LINE.destDir||0))return "";
-  var d=LINE.destColours, k=t.dest&&d[t.dest]?d[t.dest]:d._other;
+  var d=t.dir===(LINE.destDir||0)?LINE.destColours:LINE.destColoursOther;
+  if(!d)return "";
+  var k=t.dest&&d[t.dest]?d[t.dest]:d._other;
   return k?" "+k:"";
 }
 function render(fresh){
@@ -1024,7 +1030,8 @@ function setLine(id,save){
   document.querySelectorAll(".vword").forEach(function(x){x.textContent=LINE.bus?"bus":"train";});
   var dk=document.getElementById("destkey");
   dk.hidden=!LINE.destKey;
-  dk.innerHTML=(LINE.destKey||[]).map(function(k){return '<span><i style="'+(k[0]==="late"?'background:transparent;border:2px solid #d4351c':'background:'+k[0])+'"></i>'+esc(k[1])+'</span>';}).join("");
+  dk.innerHTML=(LINE.destKey||[]).map(function(k,i){if(k[0]==="hdr")return (i?'<span class="dkbr"></span>':'')+'<b class="dkh">'+esc(k[1])+'</b>';
+    return '<span><i style="'+(k[0]==="late"?'background:transparent;border:2px solid #d4351c':'background:'+k[0])+'"></i>'+esc(k[1])+'</span>';}).join("");
   document.getElementById("srcword").textContent=LINE.rail?"live departure times":"TfL arrival predictions";
   document.getElementById("attrib").textContent=LINE.rail?"Train data from National Rail (Rail Delivery Group), line status from TfL.":"Powered by TfL Open Data.";
   document.getElementById("demo").hidden=!demo||!!LINE.bus;
