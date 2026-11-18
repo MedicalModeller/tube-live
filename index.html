@@ -248,7 +248,7 @@ var LINES={
       ic:["Kentish Town",EB,EC,KX,"Old Street","Moorgate","Bank","London Bridge","Elephant & Castle","Warren Street","Tottenham Court Road","Leicester Square","Charing Cross","Embankment","Waterloo","Stockwell","Balham"],
       dirs:["Southbound","Northbound"],legend:["to Morden and Battersea","to Edgware, High Barnet and Mill Hill East"],labelUp:[],
       alias:[["euston",EB],["battersea","Battersea Power Station"],["totteridge","Totteridge & Whetstone"]],
-      split:split, vw:400, vcx:180, hpos:{"Mill Hill East":[3,0.4]},
+      split:split, vw:400, vcx:180, hpos:{"Mill Hill East":[3,0.4]},labelFlat:{"Kennington":[12,4],"Camden Town":[12,4]},
       branch:{cx:["Mornington Crescent","Warren Street","Goodge Street","Tottenham Court Road","Leicester Square","Charing Cross","Embankment","Waterloo","Nine Elms","Battersea Power Station"],
               bank:[KX,"Angel","Old Street","Moorgate","Bank","London Bridge","Borough","Elephant & Castle"]},
       sim:[["High Barnet","Morden",7],["Edgware","Morden",7],["Edgware","Battersea Power Station",5],["High Barnet","Battersea Power Station",4],["Mill Hill East","Kennington",2]]};
@@ -719,6 +719,11 @@ function drawMap(){
       el("circle",{"class":"hit",cx:p.x,cy:p.y,r:12},g);
       if(ic)el("circle",{"class":"ic",cx:p.x,cy:p.y,r:5},g);
       else{if(LINE.casing)el("line",{"class":"case","stroke-width":5,x1:p.x,y1:p.y,x2:p.x,y2:p.y+sd*8},g);el("line",{"class":"tick","stroke-width":3,x1:p.x,y1:p.y,x2:p.x,y2:p.y+sd*7},g);}
+      var lf=(LINE.labelFlat||{})[n];
+      if(lf){   /* level label, for stations at a crossing where a slanted one would sit on the line */
+        lbl=el("text",{"class":"lbl"+(ic?" ic-l":""),x:p.x+lf[0],y:p.y+lf[1],"text-anchor":lf[2]||"start"},g);
+        lbl.textContent=short(n); return;
+      }
       var le=(LINE.labelEnd||{})[n];
       if(le){   /* label below-left of the station, reading up towards it and ending at it */
         lx=p.x+le[0]; ly=p.y+le[1];
