@@ -239,7 +239,12 @@ var LINES={
     chain(L,["Oval","Stockwell","Clapham North","Clapham Common","Clapham South","Balham","Tooting Bec","Tooting Broadway","Colliers Wood","South Wimbledon","Morden"],21,1,0,"Kennington");
     chain(L,["Nine Elms","Battersea Power Station"],21,1,-1,"Kennington");
     var split={}; split[EB]={bank:EB,cx:EC}; split[EC]={bank:EB,cx:EC};
-    return {name:"Northern",col:["#15151a","#15151a","#ffffff","#cfd3df"],stations:L,extra:[["Waterloo","Kennington"]],childOrder:{},
+    return {name:"Northern",core:"Camden Town",coreSide:"Morden",destDir:0,
+      destColours:{"Morden":"c2","Battersea Power Station":"c8","Kennington":"c10"},
+      destColoursOther:{"Edgware":"c4","High Barnet":"c6","Mill Hill East":"c7","Golders Green":"c11","East Finchley":"c5","Kennington":"c10"},
+      destKey:[["hdr","Southbound:"],["#1f6fd1","Morden"],["#e75480","Battersea Power Station"],["#6e7781","Kennington"],
+        ["hdr","Northbound:"],["#00873c","Edgware"],["#f08a00","High Barnet"],["#9b4fb5","Mill Hill East"],["#7cb342","Golders Green"],["#f2c500","East Finchley"],["#6e7781","Kennington"]],
+      col:["#15151a","#15151a","#ffffff","#cfd3df"],stations:L,extra:[["Waterloo","Kennington"]],childOrder:{},
       ic:["Kentish Town",EB,EC,KX,"Old Street","Moorgate","Bank","London Bridge","Elephant & Castle","Warren Street","Tottenham Court Road","Leicester Square","Charing Cross","Embankment","Waterloo","Stockwell","Balham"],
       dirs:["Southbound","Northbound"],legend:["to Morden and Battersea","to Edgware, High Barnet and Mill Hill East"],labelUp:[],
       alias:[["euston",EB],["battersea","Battersea Power Station"],["totteridge","Totteridge & Whetstone"]],
