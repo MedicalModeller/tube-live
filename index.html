@@ -81,7 +81,10 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .train.dt path{fill:#1f6fd1;stroke:#ffffff}
 .train.de path{fill:#9b4fb5;stroke:#ffffff}
 .train.ds path{fill:#4fc3f7;stroke:#ffffff}
-.train.dk path,.train.dm path,.train.dt path,.train.de path,.train.ds path{transform:scale(1.3)}
+.train.c1 path{fill:#4fc3f7;stroke:#ffffff}.train.c2 path{fill:#1f6fd1;stroke:#ffffff}.train.c3 path{fill:#00a3a3;stroke:#ffffff}
+.train.c4 path{fill:#00873c;stroke:#ffffff}.train.c5 path{fill:#f2c500;stroke:#ffffff}.train.c6 path{fill:#f08a00;stroke:#ffffff}
+.train.c7 path{fill:#9b4fb5;stroke:#ffffff}
+.train.dk path,.train.dm path,.train.dt path,.train.de path,.train.ds path,.train[class*=" c"] path{transform:scale(1.3)}
 .train.late path{stroke:#d4351c;stroke-width:2.4}
 .lateTxt{color:var(--bad);font-weight:600}
 .dirgrp.cancelled h3,.cancelled .row b{color:var(--bad)}
@@ -460,7 +463,10 @@ var LINES={
     chain(L,["Hanger Lane","Perivale","Greenford","Northolt","South Ruislip","Ruislip Gardens","West Ruislip"],38,1,1,"North Acton");
     chain(L,["West Acton","Ealing Broadway"],38,1,-1,"North Acton");
     chain(L,["Wanstead","Redbridge","Gants Hill","Newbury Park","Barkingside","Fairlop","Hainault","Grange Hill","Chigwell","Roding Valley"],15,-1,-1,"Leytonstone");
-    return {name:"Central",wiki:true,col:["#d2042d","#b00327","#ffffff","#ff4d6d"],stations:L,extra:[["Roding Valley","Woodford"]],childOrder:{},
+    return {name:"Central",wiki:true,destDir:1,
+      destColours:{"Woodford":"c1","Loughton":"c2","Debden":"c3","Epping":"c4","Newbury Park":"c5","Hainault":"c6","Grange Hill":"c7"},
+      destKey:[["#4fc3f7","Woodford"],["#1f6fd1","Loughton"],["#00a3a3","Debden"],["#00873c","Epping"],["#f2c500","Newbury Park"],["#f08a00","Hainault"],["#9b4fb5","Grange Hill"]],
+      col:["#d2042d","#b00327","#ffffff","#ff4d6d"],stations:L,extra:[["Roding Valley","Woodford"]],childOrder:{},
       ic:["Stratford","Mile End","Liverpool Street","Bank","Holborn","Tottenham Court Road","Oxford Circus","Bond Street","Notting Hill Gate","Shepherd's Bush","Greenford","South Ruislip","West Ruislip","Ealing Broadway"],
       dirs:["Westbound","Eastbound"],legend:["to Ealing Broadway and West Ruislip","to Epping and Hainault"],labelUp:[],
       alias:[["shepherds bush central","Shepherd's Bush"]],
