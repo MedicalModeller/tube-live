@@ -208,8 +208,10 @@ var LINES={
     chain(L,["South Ealing","Northfields","Boston Manor","Osterley","Hounslow East","Hounslow Central","Hounslow West","Hatton Cross"],28,1,-1,"Acton Town");
     L.push([T4,36,-1.7,"Hatton Cross"],[T23,37,-1,"Hatton Cross"],[T5,38,-1,T23]);
     chain(L,["Ealing Common","North Ealing","Park Royal","Alperton","Sudbury Town","Sudbury Hill","South Harrow","Rayners Lane","Eastcote","Ruislip Manor","Ruislip","Ickenham","Hillingdon","Uxbridge"],28,1,1,"Acton Town");
-    return {name:"Piccadilly",destDir:1,destColours:{"Arnos Grove":"ds","Cockfosters":"dm"},
-      destKey:[["#4fc3f7","To Arnos Grove"],["#00873c","To Cockfosters"]],
+    var pcW={"Uxbridge":"c8","Rayners Lane":"c3","Northfields":"c9","Acton Town":"c10","Hounslow West":"c7"}; pcW[T5]="c6"; pcW[T4]="c5"; pcW[T23]="c11";
+    return {name:"Piccadilly",core:"Holborn",coreSide:"Uxbridge",coreOther:"Cockfosters",destDir:1,destColours:{"Arnos Grove":"ds","Cockfosters":"dm"},destColoursOther:pcW,
+      destKey:[["hdr","Eastbound:"],["#4fc3f7","Arnos Grove"],["#00873c","Cockfosters"],
+        ["hdr","Westbound:"],["#f08a00","Heathrow T5"],["#f2c500","Heathrow T4"],["#7cb342","Heathrow T2 & 3"],["#e75480","Uxbridge"],["#00a3a3","Rayners Lane"],["#8d5a2b","Northfields"],["#9b4fb5","Hounslow West"],["#6e7781","Acton Town"]],
       col:["#0019a8","#0019a8","#ffffff","#6680ff"],stations:L,extra:[[T4,T23]],childOrder:{"Hatton Cross":[T23,T4]},
       ic:["Finsbury Park",KX,"Holborn","Leicester Square","Piccadilly Circus","Green Park","South Kensington","Gloucester Road","Earl's Court","Barons Court","Hammersmith","Turnham Green","Acton Town","Ealing Common","Rayners Lane","Uxbridge",T23,T5],
       dirs:["Westbound","Eastbound"],legend:["to Heathrow and Uxbridge","to Cockfosters"],
