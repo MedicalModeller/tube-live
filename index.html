@@ -447,6 +447,9 @@ var LINES={
     L.push([KGX,12.9,2.2,"Finsbury Park"]);
     chain(L,["St Pancras International","Farringdon","City Thameslink","London Blackfriars"],13.5,1,1,"Finsbury Park");
     chain(L,["Drayton Park","Highbury & Islington","Essex Road","Old Street","Moorgate"],13,1,-1,"Finsbury Park");
+    /* The Hertford Loop (Enfield Chase line) leaves the main line just north of Alexandra Palace and runs back under it */
+    var HL=["Bowes Park","Palmers Green","Winchmore Hill","Grange Park","Enfield Chase","Gordon Hill","Crews Hill","Cuffley","Bayford","Hertford North"];
+    chain(L,HL,8,-1,-1,"Alexandra Palace");
     /* National Rail station codes, so trains from the go-between land on the right stop */
     /* Wide screens: King's Cross climbs at 45 degrees, Moorgate runs straight on, Thameslink drops at 45 degrees. */
     var hpGN={}; hpGN[KGX]=[13,1];
@@ -460,15 +463,19 @@ var LINES={
     var crs={WGC:"Welwyn Garden City",HAT:"Hatfield",WMG:"Welham Green",BPK:"Brookmans Park",PBR:"Potters Bar",HDW:"Hadley Wood",NBA:"New Barnet",
       OKL:"Oakleigh Park",NSG:"New Southgate",AAP:"Alexandra Palace",HRN:"Hornsey",HGY:"Harringay",FPK:"Finsbury Park",KGX:KGX,
       DYP:"Drayton Park",HHY:"Highbury & Islington",EXR:"Essex Road",OLD:"Old Street",MOG:"Moorgate",
-      STP:"St Pancras International",ZFD:"Farringdon",CTK:"City Thameslink",BFR:"London Blackfriars"};
-    return {name:"Great Northern & Thameslink",h1:"Hadley Wood line",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park","St Pancras International",KGX]},flip:true,vw:420,vcx:210,hpos:hpGN,vpos:vpGN,labelEnd:{"Finsbury Park":[-7,13]},
+      STP:"St Pancras International",ZFD:"Farringdon",CTK:"City Thameslink",BFR:"London Blackfriars",
+      BOP:"Bowes Park",PAL:"Palmers Green",WIH:"Winchmore Hill",GPK:"Grange Park",ENC:"Enfield Chase",GDH:"Gordon Hill",
+      CWH:"Crews Hill",CUF:"Cuffley",BAY:"Bayford",HFN:"Hertford North"};
+    return {name:"Great Northern & Thameslink",h1:"Hadley Wood & Enfield Chase",col:["#3d5a80","#2f4a6d","#ffffff","#8fb0d9"],stations:L,extra:[],childOrder:{"Finsbury Park":["Drayton Park","St Pancras International",KGX]},flip:true,vw:420,vcx:210,hpos:hpGN,vpos:vpGN,labelEnd:{"Finsbury Park":[-7,13]},
       rail:true, destColours:(function(){var d={_other:"dt"};d[KGX]="dk";d["Moorgate"]="dm";return d;})(),
-      destKey:[["#15151a","To King's Cross"],["#00873c","To Moorgate"],["#1f6fd1","Thameslink via Blackfriars"],["late","Red edge: running late"]], arrUrl:"https://gn-trains.tudordesigns.workers.dev/", statusId:"great-northern", idMap:crs,
-      ic:["Welwyn Garden City","Hatfield","Hadley Wood","New Barnet","Alexandra Palace","Finsbury Park",KGX,"Highbury & Islington","Old Street","Moorgate","St Pancras International","Farringdon","City Thameslink","London Blackfriars"],
+      destColoursOther:{"Welwyn Garden City":"c6","Hatfield":"c6","Gordon Hill":"c7","Hertford North":"c7","Stevenage":"c7","Watton-at-Stone":"c7","Cuffley":"c7"},
+      destKey:[["hdr","To London:"],["#15151a","King's Cross"],["#00873c","Moorgate"],["#1f6fd1","Thameslink via Blackfriars"],["late","Red edge: running late"],
+        ["hdr","Heading out:"],["#9b4fb5","Via Enfield Chase (Gordon Hill, Hertford North, Stevenage)"],["#f08a00","Via Hadley Wood (Welwyn Garden City)"]], arrUrl:"https://gn-trains.tudordesigns.workers.dev/", statusId:"great-northern", idMap:crs,
+      ic:["Welwyn Garden City","Hatfield","Hadley Wood","New Barnet","Alexandra Palace","Finsbury Park",KGX,"Highbury & Islington","Old Street","Moorgate","St Pancras International","Farringdon","City Thameslink","London Blackfriars","Gordon Hill","Hertford North"],
       words:[["southbound",0],["northbound",1]],
-      dirs:["Southbound","Northbound"],legend:["to Moorgate, King's Cross and Thameslink","to Welwyn Garden City"],labelUp:[],
+      dirs:["Southbound","Northbound"],legend:["to Moorgate, King's Cross and Thameslink","to Welwyn Garden City, Gordon Hill and Hertford North"],labelUp:[],
       alias:[["london kings cross",KGX],["kings cross",KGX],["hatfield herts","Hatfield"],["st pancras","St Pancras International"],["st pancras intl","St Pancras International"],["blackfriars","London Blackfriars"]],
-      sim:[["Welwyn Garden City","Moorgate",5],["Welwyn Garden City",KGX,2],["Welwyn Garden City","London Blackfriars",3]]};
+      sim:[["Hertford North","Moorgate",3],["Gordon Hill","Moorgate",1],["Welwyn Garden City","Moorgate",5],["Welwyn Garden City",KGX,2],["Welwyn Garden City","London Blackfriars",3]]};
   })(),
   central:(function(){
     var L=[];
@@ -770,9 +777,12 @@ function trainGeom(t,now){
 function destClass(t){
   var d=t.dir===(LINE.destDir||0)?LINE.destColours:LINE.destColoursOther;
   if(!d)return "";
-  var k=t.dest&&d[t.dest]?d[t.dest]:d._other;
+  /* places off the strip (Stevenage, say) are matched by the name National Rail gives */
+  var nm=t.dest||(t.destRaw?t.destRaw.replace(/ (Underground|DLR|Rail) Station/i,""):"");
+  var k=nm&&d[nm]?d[nm]:d._other;
   return k?" "+k:"";
 }
+
 function render(fresh){
   if(!LY||!trainLayer)return;
   var now=Date.now(), seen=new Set(), n=[0,0];
